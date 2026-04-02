@@ -1,81 +1,80 @@
 {
-  "name": "HimalayanSpicesExports - Premium E-Commerce Platform",
-  "short_name": "HimalayanSpicesExports",
-  "description": "Premium Himalayan spices, Kashmiri saffron, herbs & teas. Authentic spices from mountain farmers at HimalayanSpicesExports.",
+  "name": "Aligarh Attars - Premium Traditional Fragrances",
+  "short_name": "AligarhAttars",
+  "description": "Discover pure traditional attars, concentrated perfume oils, and luxury oud from Aligarh Attars. Authentic, pure fragrances delivered worldwide.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#6366f1",
+  "theme_color": "#8B4513",
   "orientation": "portrait-primary",
   "scope": "/",
-  "lang": "en-US",
+  "lang": "en-IN",
   "dir": "ltr",
   "categories": [
     "shopping",
-    "lifestyle",
-    "business"
+    "lifestyle"
   ],
   "screenshots": [
     {
-      "src": "/screenshots/desktop-home.png",
+      "src": "/favicon.ico",
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Home page on desktop"
+      "label": "Traditional Fragrance Collection"
     },
     {
-      "src": "/screenshots/mobile-products.png",
-      "sizes": "390x844",
+      "src": "/favicon.ico",
+      "sizes": "750x1334",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Products page on mobile"
+      "label": "Mobile Fragrance Shopping"
     }
   ],
   "icons": [
     {
-      "src": "/icons/icon-72x72.png",
+      "src": "/favicon.ico",
       "sizes": "72x72",
       "type": "image/png",
       "purpose": "maskable any"
     },
     {
-      "src": "/icons/icon-96x96.png",
+      "src": "/favicon.ico",
       "sizes": "96x96",
       "type": "image/png",
       "purpose": "maskable any"
     },
     {
-      "src": "/icons/icon-128x128.png",
+      "src": "/favicon.ico",
       "sizes": "128x128",
       "type": "image/png",
       "purpose": "maskable any"
     },
     {
-      "src": "/icons/icon-144x144.png",
+      "src": "/favicon.ico",
       "sizes": "144x144",
       "type": "image/png",
       "purpose": "maskable any"
     },
     {
-      "src": "/icons/icon-152x152.png",
+      "src": "/favicon.ico",
       "sizes": "152x152",
       "type": "image/png",
       "purpose": "maskable any"
     },
     {
-      "src": "/icons/icon-192x192.png",
+      "src": "/favicon.ico",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable any"
     },
     {
-      "src": "/icons/icon-384x384.png",
+      "src": "/favicon.ico",
       "sizes": "384x384",
       "type": "image/png",
       "purpose": "maskable any"
     },
     {
-      "src": "/icons/icon-512x512.png",
+      "src": "/favicon.ico",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable any"
@@ -85,11 +84,11 @@
     {
       "name": "Products",
       "short_name": "Products",
-      "description": "Browse our product catalog",
+      "description": "Browse our traditional fragrances",
       "url": "/products",
       "icons": [
         {
-          "src": "/icons/shortcut-products.png",
+          "src": "/favicon.ico",
           "sizes": "96x96"
         }
       ]
@@ -101,31 +100,7 @@
       "url": "/cart",
       "icons": [
         {
-          "src": "/icons/shortcut-cart.png",
-          "sizes": "96x96"
-        }
-      ]
-    },
-    {
-      "name": "Profile",
-      "short_name": "Profile",
-      "description": "Manage your account",
-      "url": "/profile",
-      "icons": [
-        {
-          "src": "/icons/shortcut-profile.png",
-          "sizes": "96x96"
-        }
-      ]
-    },
-    {
-      "name": "Wishlist",
-      "short_name": "Wishlist",
-      "description": "View saved items",
-      "url": "/wishlist",
-      "icons": [
-        {
-          "src": "/icons/shortcut-wishlist.png",
+          "src": "/favicon.ico",
           "sizes": "96x96"
         }
       ]

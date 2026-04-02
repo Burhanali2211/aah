@@ -5,6 +5,7 @@ import { FormInput, FormTextarea, FormSelect, FormCheckbox } from '../../Common/
 import { ImageUpload } from '../../Common/ImageUpload';
 import { supabase } from '../../../lib/supabase';
 import { useNotification } from '../../../contexts/NotificationContext';
+import { useProducts } from '../../../contexts/ProductContext';
 import { AdminDashboardLayout } from '../Layout/AdminDashboardLayout';
 
 interface FormData {
@@ -88,6 +89,7 @@ export const ProductFormPage: React.FC = () => {
   const [fetching, setFetching] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const { showSuccess, showError } = useNotification();
+  const { createProduct, updateProduct } = useProducts();
 
   useEffect(() => {
     fetchCategories();
@@ -222,36 +224,34 @@ export const ProductFormPage: React.FC = () => {
         }
       }
 
-      const payload: any = {
+      const productData: any = {
         name: formData.name,
         slug: formData.slug || undefined,
         description: formData.description || undefined,
-        short_description: formData.short_description || undefined,
+        shortDescription: formData.short_description || undefined,
         price: parseFloat(formData.price),
-        original_price: formData.original_price ? parseFloat(formData.original_price) : null,
-        category_id: formData.category_id,
+        originalPrice: formData.original_price ? parseFloat(formData.original_price) : undefined,
+        categoryId: formData.category_id,
         stock: parseInt(formData.stock),
-        min_stock_level: parseInt(formData.min_stock_level),
+        minStockLevel: parseInt(formData.min_stock_level),
         sku: formData.sku || undefined,
-        weight: formData.weight ? parseFloat(formData.weight) : null,
-        dimensions: Object.keys(dimensions).length > 0 ? dimensions : null,
-        tags: tags.length > 0 ? tags : null,
+        weight: formData.weight ? parseFloat(formData.weight) : undefined,
+        dimensions: Object.keys(dimensions).length > 0 ? dimensions : undefined,
+        tags: tags.length > 0 ? tags : undefined,
         specifications,
-        is_featured: formData.is_featured,
-        is_active: formData.is_active,
-        show_on_homepage: formData.show_on_homepage,
-        meta_title: formData.meta_title || undefined,
-        meta_description: formData.meta_description || undefined,
-        images: Array.isArray(formData.images) ? formData.images : formData.images ? [formData.images] : [],
+        featured: formData.is_featured,
+        isActive: formData.is_active,
+        showOnHomepage: formData.show_on_homepage,
+        metaTitle: formData.meta_title || undefined,
+        metaDescription: formData.meta_description || undefined,
+        images: Array.isArray(formData.images) ? formData.images : (formData.images ? [formData.images] : []),
       };
 
       if (isEditMode && id) {
-        const { error } = await supabase.from('products').update(payload).eq('id', id);
-        if (error) throw error;
+        await updateProduct({ ...productData, id });
         showSuccess('Success', 'Product updated');
       } else {
-        const { error } = await supabase.from('products').insert(payload);
-        if (error) throw error;
+        await createProduct(productData);
         showSuccess('Success', 'Product created');
       }
 

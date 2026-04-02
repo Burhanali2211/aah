@@ -4,6 +4,7 @@ import { Plus, Search, Edit, Trash2, Package, CheckCircle, AlertTriangle, XCircl
 import { ConfirmModal } from '../../Common/Modal';
 import { supabase } from '../../../lib/supabase';
 import { useNotification } from '../../../contexts/NotificationContext';
+import { useProducts } from '../../../contexts/ProductContext';
 import { isValidImageUrl, getFirstValidImage } from '../../../utils/images';
 
 interface Product {
@@ -73,25 +74,23 @@ const Pagination: React.FC<{
   );
 };
 
-// Module-level cache – survives SPA navigation, cleared on hard refresh
-let _productsCache: { products: Product[]; totalItems: number; totalPages: number } | null = null;
-let _productStatsCache: { active: number; lowStock: number; outOfStock: number } | null = null;
 
 export const ProductsList: React.FC = () => {
   const navigate = useNavigate();
-  const [products, setProducts] = useState<Product[]>(_productsCache?.products ?? []);
-  const [loading, setLoading] = useState(_productsCache === null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(_productsCache?.totalPages ?? 1);
-  const [totalItems, setTotalItems] = useState(_productsCache?.totalItems ?? 0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [productStats, setProductStats] = useState(_productStatsCache ?? { active: 0, lowStock: 0, outOfStock: 0 });
+  const [productStats, setProductStats] = useState({ active: 0, lowStock: 0, outOfStock: 0 });
   const { showSuccess, showError } = useNotification();
+  const { deleteProduct } = useProducts();
 
   const pageSize = 10;
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -110,16 +109,13 @@ export const ProductsList: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const background = isFirstMount.current && _productsCache !== null;
-    isFirstMount.current = false;
-    fetchProducts(background);
+    fetchProducts();
   }, [currentPage, searchTerm, statusFilter]);
   useEffect(() => {
-    const background = _productStatsCache !== null;
-    fetchProductStats(background);
+    fetchProductStats();
   }, []);
 
-  const fetchProductStats = async (background = false) => {
+  const fetchProductStats = async () => {
     try {
       const [{ count: active }, { count: lowStock }, { count: outOfStock }] = await Promise.all([
         supabase.from('products').select('*', { count: 'exact', head: true }).eq('is_active', true),
@@ -128,15 +124,14 @@ export const ProductsList: React.FC = () => {
       ]);
       const newStats = { active: active ?? 0, lowStock: lowStock ?? 0, outOfStock: outOfStock ?? 0 };
       setProductStats(newStats);
-      _productStatsCache = newStats;
     } catch {
       // non-critical
     }
   };
 
-  const fetchProducts = async (background = false) => {
+  const fetchProducts = async () => {
     try {
-      if (!background) setLoading(true);
+      setLoading(true);
       const from = (currentPage - 1) * pageSize;
       const to = from + pageSize - 1;
 
@@ -176,14 +171,10 @@ export const ProductsList: React.FC = () => {
       setProducts(mappedProducts);
       setTotalItems(ti);
       setTotalPages(tp);
-      // Cache only the default (page 1, no filters) result
-      if (currentPage === 1 && !searchTerm && !statusFilter) {
-        _productsCache = { products: mappedProducts, totalItems: ti, totalPages: tp };
-      }
     } catch (error: any) {
-      if (!background) showError('Error', error.message || 'Failed to load products');
+      showError('Error', error.message || 'Failed to load products');
     } finally {
-      if (!background) setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -191,27 +182,14 @@ export const ProductsList: React.FC = () => {
     if (!selectedProduct) return;
     try {
       setDeleteLoading(true);
-      const pid = selectedProduct.id;
-
-      // Remove FK references before deleting the product to avoid 409 conflicts
-      await Promise.allSettled([
-        supabase.from('cart_items').delete().eq('product_id', pid),
-        supabase.from('wishlist_items').delete().eq('product_id', pid),
-        supabase.from('order_items').delete().eq('product_id', pid),
-        supabase.from('reviews').delete().eq('product_id', pid),
-      ]);
-
-      const { error } = await supabase.from('products').delete().eq('id', pid);
-      if (error) throw error;
-
-      _productsCache = null;
+      await deleteProduct(selectedProduct.id);
       showSuccess('Success', 'Product deleted successfully');
       setShowDeleteModal(false);
       setSelectedProduct(null);
       fetchProducts();
       fetchProductStats();
     } catch (error: any) {
-      showError('Error', error.message || 'Failed to delete product');
+      // Error is already handled/reported by ProductContext
     } finally {
       setDeleteLoading(false);
     }

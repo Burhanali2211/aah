@@ -169,25 +169,54 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   }, [showError]);
 
-  const addProduct = useCallback(async (product: Omit<Product, 'id' | 'createdAt' | 'reviews' | 'rating' | 'reviewCount'>) => {
+  const addProduct = useCallback(async (product: Partial<Product>) => {
     try {
+      const payload = {
+        name: product.name,
+        slug: product.slug,
+        description: product.description,
+        short_description: product.shortDescription,
+        price: product.price,
+        original_price: product.originalPrice,
+        category_id: product.categoryId,
+        images: product.images,
+        stock: product.stock,
+        min_stock_level: product.minStockLevel,
+        sku: product.sku,
+        weight: product.weight,
+        dimensions: product.dimensions,
+        tags: product.tags,
+        specifications: product.specifications,
+        is_featured: product.featured,
+        show_on_homepage: product.showOnHomepage ?? true,
+        is_active: product.isActive ?? true,
+        meta_title: product.metaTitle,
+        meta_description: product.metaDescription,
+        seller_id: product.sellerId
+      };
+
       const { data, error } = await supabase
         .from('products')
-        .insert([{
-          name: product.name, description: product.description, price: product.price,
-          category_id: product.categoryId, images: product.images, stock: product.stock,
-          seller_id: product.sellerId, is_featured: product.featured, show_on_homepage: product.showOnHomepage
-        }])
+        .insert([payload])
         .select()
         .single();
+        
       if (error) throw error;
-      await fetchProducts(1, 20, undefined);
+      
+      // Refetch all to ensure consistency across homepage/catalog
+      await Promise.all([
+        fetchProducts(1, 20, undefined),
+        fetchFeaturedProducts(8),
+        fetchLatestProducts(8),
+        fetchBestSellers(8)
+      ]);
+      
       return mapDbProductToAppProduct(data);
     } catch (error) {
       showError('Failed to create product', error instanceof Error ? error.message : undefined);
       throw error;
     }
-  }, [showError, fetchProducts, mapDbProductToAppProduct]);
+  }, [showError, fetchProducts, fetchFeaturedProducts, fetchLatestProducts, fetchBestSellers, mapDbProductToAppProduct]);
 
   const submitReview = useCallback(async (review: Omit<Review, 'id' | 'createdAt' | 'profiles'>) => {
     try {
@@ -237,35 +266,81 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   }, [showError, mapDbProductToAppProduct]);
 
-  const createProduct = useCallback(async (data: Partial<Product>) => addProduct(data as any), [addProduct]);
+  const createProduct = useCallback(async (data: Partial<Product>) => addProduct(data), [addProduct]);
 
-  const updateProduct = useCallback(async (product: Product) => {
+  const updateProduct = useCallback(async (product: Partial<Product> & { id: string }) => {
     try {
+      const payload: any = {};
+      if (product.name !== undefined) payload.name = product.name;
+      if (product.slug !== undefined) payload.slug = product.slug;
+      if (product.description !== undefined) payload.description = product.description;
+      if (product.shortDescription !== undefined) payload.short_description = product.shortDescription;
+      if (product.price !== undefined) payload.price = product.price;
+      if (product.originalPrice !== undefined) payload.original_price = product.originalPrice;
+      if (product.categoryId !== undefined) payload.category_id = product.categoryId;
+      if (product.images !== undefined) payload.images = product.images;
+      if (product.stock !== undefined) payload.stock = product.stock;
+      if (product.minStockLevel !== undefined) payload.min_stock_level = product.minStockLevel;
+      if (product.sku !== undefined) payload.sku = product.sku;
+      if (product.weight !== undefined) payload.weight = product.weight;
+      if (product.dimensions !== undefined) payload.dimensions = product.dimensions;
+      if (product.tags !== undefined) payload.tags = product.tags;
+      if (product.specifications !== undefined) payload.specifications = product.specifications;
+      if (product.featured !== undefined) payload.is_featured = product.featured;
+      if (product.showOnHomepage !== undefined) payload.show_on_homepage = product.showOnHomepage;
+      if (product.isActive !== undefined) payload.is_active = product.isActive;
+      if (product.metaTitle !== undefined) payload.meta_title = product.metaTitle;
+      if (product.metaDescription !== undefined) payload.meta_description = product.metaDescription;
+
       const { data, error } = await supabase
         .from('products')
-        .update({ name: product.name, description: product.description, price: product.price, category_id: product.categoryId, images: product.images, stock: product.stock, is_featured: product.featured, show_on_homepage: product.showOnHomepage })
+        .update(payload)
         .eq('id', product.id)
         .select()
         .single();
+        
       if (error) throw error;
-      await fetchProducts(pagination?.page || 1, 20, undefined);
+      
+      // Refetch all to ensure consistency across homepage/catalog
+      await Promise.all([
+        fetchProducts(pagination?.page || 1, 20, undefined),
+        fetchFeaturedProducts(8),
+        fetchLatestProducts(8),
+        fetchBestSellers(8)
+      ]);
+      
       return mapDbProductToAppProduct(data);
     } catch (error) {
       showError('Failed to update product', error instanceof Error ? error.message : undefined);
       throw error;
     }
-  }, [showError, fetchProducts, pagination, mapDbProductToAppProduct]);
+  }, [showError, fetchProducts, fetchFeaturedProducts, fetchLatestProducts, fetchBestSellers, pagination, mapDbProductToAppProduct]);
 
   const deleteProduct = useCallback(async (id: string) => {
     try {
+      // Remove FK references before deleting the product to avoid integrity constraint violations
+      await Promise.allSettled([
+        supabase.from('cart_items').delete().eq('product_id', id),
+        supabase.from('wishlist_items').delete().eq('product_id', id),
+        supabase.from('order_items').delete().eq('product_id', id),
+        supabase.from('reviews').delete().eq('product_id', id),
+      ]);
+
       const { error } = await supabase.from('products').delete().eq('id', id);
       if (error) throw error;
-      await fetchProducts(pagination?.page || 1, 20, undefined);
+      
+      // Refetch all to ensure consistency across homepage/catalog
+      await Promise.all([
+        fetchProducts(pagination?.page || 1, 20, undefined),
+        fetchFeaturedProducts(8),
+        fetchLatestProducts(8),
+        fetchBestSellers(8)
+      ]);
     } catch (error) {
       showError('Failed to delete product', error instanceof Error ? error.message : undefined);
       throw error;
     }
-  }, [showError, fetchProducts, pagination]);
+  }, [showError, fetchProducts, fetchFeaturedProducts, fetchLatestProducts, fetchBestSellers, pagination]);
 
   const createCategory = useCallback(async (data: Partial<Category>) => {
     try {

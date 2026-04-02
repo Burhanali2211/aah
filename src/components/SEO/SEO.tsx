@@ -100,7 +100,7 @@ export const ProductSEO: React.FC<{
 }> = ({ productName, description, price, image, category, availability }) => {
   const title = `${productName} - Buy Online`;
   const desc = `${description.substring(0, 150)}... Price: ₹${price}. ${availability === 'InStock' ? 'In Stock' : 'Out of Stock'}. Aligarh Attars – Free shipping on orders above ₹499.`;
-  const keywords = `${productName}, ${category || 'attar'}, aligarh attar, buy ${productName} online, aligarhattar`;
+  const keywords = `${productName}, ${category || 'attar'}, aligarh attars, buy ${productName} online, aligarhattar`;
 
   return (
     <SEO
@@ -121,9 +121,9 @@ export const CategorySEO: React.FC<{
   description?: string;
   productCount?: number;
 }> = ({ categoryName, description, productCount }) => {
-  const title = `${categoryName} - Aligarh Attar House`;
-  const desc = description || `Browse premium ${categoryName.toLowerCase()} at Aligarh Attar House. ${productCount ? `${productCount} products available.` : ''} Authentic attars & Islamic lifestyle products. Free shipping on orders above ₹499.`;
-  const keywords = `${categoryName}, aligarh attar house, buy ${categoryName} online, ${categoryName} shop, attar perfume`;
+  const title = `${categoryName} - Aligarh Attars`;
+  const desc = description || `Browse premium ${categoryName.toLowerCase()} at Aligarh Attars. ${productCount ? `${productCount} products available.` : ''} Authentic attars & traditional fragrances. Free shipping on orders above ₹499.`;
+  const keywords = `${categoryName}, aligarh attars, buy ${categoryName} online, ${categoryName} shop, attar perfume`;
 
   return (
     <SEO

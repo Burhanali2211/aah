@@ -4,6 +4,7 @@ import { FormInput, FormTextarea, FormSelect, FormCheckbox } from '../../Common/
 import { ImageUpload } from '../../Common/ImageUpload';
 import { supabase } from '../../../lib/supabase';
 import { useNotification } from '../../../contexts/NotificationContext';
+import { useProducts } from '../../../contexts/ProductContext';
 import { Loader2 } from 'lucide-react';
 
 interface ProductFormProps {
@@ -53,6 +54,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSu
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const { showSuccess, showError } = useNotification();
+  const { createProduct, updateProduct } = useProducts();
 
   useEffect(() => {
     fetchCategories();
@@ -145,30 +147,28 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSu
     try {
       setLoading(true);
 
-      const payload = {
+      const productData = {
         name: formData.name,
         slug: formData.slug || undefined,
         description: formData.description || undefined,
-        short_description: formData.short_description || undefined,
+        shortDescription: formData.short_description || undefined,
         price: parseFloat(formData.price),
-        original_price: formData.original_price ? parseFloat(formData.original_price) : null,
-        category_id: formData.category_id || null,
+        originalPrice: formData.original_price ? parseFloat(formData.original_price) : undefined,
+        categoryId: formData.category_id,
         stock: parseInt(formData.stock) || 0,
-        min_stock_level: parseInt(formData.min_stock_level) || 0,
+        minStockLevel: parseInt(formData.min_stock_level) || 0,
         sku: formData.sku || undefined,
-        is_featured: formData.is_featured ?? false,
-        is_active: formData.is_active !== undefined ? formData.is_active : true,
-        show_on_homepage: true,
+        featured: formData.is_featured ?? false,
+        showOnHomepage: true,
+        isActive: formData.is_active !== undefined ? formData.is_active : true,
         images: Array.isArray(formData.images) ? formData.images : (formData.images ? [formData.images] : [])
       };
 
       if (product) {
-        const { error } = await supabase.from('products').update(payload).eq('id', product.id);
-        if (error) throw error;
+        await updateProduct({ ...productData, id: product.id } as any);
         showSuccess('Success', 'Product updated successfully');
       } else {
-        const { error } = await supabase.from('products').insert(payload);
-        if (error) throw error;
+        await createProduct(productData as any);
         showSuccess('Success', 'Product created successfully');
       }
 
