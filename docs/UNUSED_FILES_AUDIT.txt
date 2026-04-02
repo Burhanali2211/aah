@@ -1,0 +1,66 @@
+POTENTIALLY UNUSED FILES IN SRC DIRECTORY
+Generated for cleanup review
+
+API Files:
+- src/api/health.ts
+
+Admin Settings Components:
+- src/components/Admin/Settings/ContactInfoList.tsx
+- src/components/Admin/Settings/FooterLinksList.tsx
+- src/components/Admin/Settings/SocialMediaList.tsx
+
+Authentication Components:
+- src/components/Auth/ProfessionalAuthLayout.tsx
+
+Common Components:
+- src/components/Common/AdminLoadingState.tsx
+- src/components/Common/EnhancedButton.tsx
+- src/components/Common/ProfileRedirect.tsx
+- src/components/Common/ResponsiveContainer.tsx
+- src/components/Common/StagedLoader.tsx
+
+Customer Components:
+- src/components/Customer/Cart/CustomerCartPage.tsx
+- src/components/Customer/Wishlist/CustomerWishlistPage.tsx
+
+Home Components:
+- src/components/Home/BentoGrid.tsx
+
+Layout Components:
+- src/components/Layout/Breadcrumbs.tsx
+- src/components/Layout/ResponsiveLayout.tsx
+
+Navigation Components:
+- src/components/Navigation/AdvancedNavigationSidebar.tsx
+- src/components/Navigation/RouteGuard.tsx
+
+Product Components:
+- src/components/Product/AdvancedFilters.tsx
+- src/components/Product/BestSellerProductCard.tsx
+- src/components/Product/FeaturedProductCard.tsx
+- src/components/Product/PerfectPair.tsx
+- src/components/Product/ProductionProductForm.tsx
+
+Security Components:
+- src/components/Security/SecurityProvider.tsx
+
+Seller Components:
+- src/components/Seller/Layout/SellerHeader.tsx
+- src/components/Seller/Products/SellerProductsList.tsx
+
+SEO Components:
+- src/components/SEO/SEO.tsx
+- src/components/SEO/StructuredData.tsx
+
+Deprecated Contexts (Already consolidated in Phase 2):
+- src/contexts/AddressContext.tsx
+- src/contexts/CartContext.tsx
+(These are re-exports for backward compatibility)
+
+NOTE: Review before deletion as some may be:
+1. Used dynamically (lazy loading)
+2. Used in testing
+3. Reserved for future use
+4. Imported via index files
+
+RECOMMENDATION: Move unused files to archive/ folder instead of deleting
