@@ -24,7 +24,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isMobileAuthOpen, setIsMobileAuthOpen] = useState(false);
   const [mobileAuthMode, setMobileAuthMode] = useState<'login' | 'signup' | 'profile'>('login');
 
-  // AuthModal state (merged from AuthModalContext)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalAction, setModalAction] = useState<'cart' | 'wishlist' | 'compare' | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -62,14 +61,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     if (!error) return data;
 
-    // PGRST116 = 0 rows — profile was never created (trigger missing / pre-trigger signup).
-    // Use the SECURITY DEFINER RPC so RLS never blocks this fallback creation.
     if (error.code === 'PGRST116') {
       const { data: { user: sbUser } } = await supabase.auth.getUser();
-
-      // If there is no active session, we can't create the profile safely.
-      // This happens right after signUp when email confirmation is still required.
-      // The trigger already created the profile row; it's just not visible to anon.
       if (!sbUser) return null;
 
       const { error: rpcErr } = await supabase.rpc('ensure_profile_exists', {
@@ -79,12 +72,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         p_role:      sbUser.user_metadata?.role || 'customer',
       });
 
-      if (rpcErr) {
-        console.error('Error creating missing profile:', rpcErr);
-        return null;
-      }
+      if (rpcErr) return null;
 
-      // Re-fetch the profile that was just upserted
       const { data: created } = await supabase
         .from('profiles')
         .select('*')
@@ -93,59 +82,67 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       return created || null;
     }
-
-    console.error('Error fetching profile:', error);
     return null;
   };
 
   useEffect(() => {
-    // 1. Set a hard timeout for auth initialization (5 seconds)
-    // If it takes longer, the app will continue as guest instead of being stuck
-    const timeoutId = setTimeout(() => {
-      if (loading) {
-        console.warn('Auth initialization timed out after 5s. Proceeding as guest.');
-        setLoading(false);
-      }
-    }, 5000);
-
-    // 2. Ultimate Fallback: If still loading after 15s, clear site data and hard reload
-    // This is the absolute "self-healing" logic for corrupt sessions or stale SWs.
-    const recoveryTimeout = setTimeout(async () => {
-      if (loading) {
-        console.error('CRITICAL: App failed to load after 15s. Performing emergency data purge and reload.');
-        try {
-          if ('serviceWorker' in navigator) {
-            const regs = await navigator.serviceWorker.getRegistrations();
-            for (const r of regs) await r.unregister();
-          }
-          if ('caches' in window) {
-            const keys = await caches.keys();
-            for (const k of keys) await caches.delete(k);
-          }
-          localStorage.clear();
-          sessionStorage.clear();
-          window.location.reload();
-        } catch (e) {
-          window.location.reload();
+    const nuclearRecovery = async () => {
+      try {
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          for (const r of regs) await r.unregister();
         }
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          for (const k of keys) await caches.delete(k);
+        }
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.reload();
+      } catch (e) {
+        window.location.reload();
       }
-    }, 15000);
+    };
 
     const initializeAuth = async () => {
+      console.log('[AUTH] Starting initialization...');
+      
+      const timeoutId = setTimeout(() => {
+        if (loading) {
+          console.warn('[AUTH] Session recovery taking too long, proceeding as guest...');
+          setLoading(false);
+        }
+      }, 5000);
+
+      const recoveryTimeout = setTimeout(() => {
+        if (loading) {
+          console.error('[AUTH] CRITICAL HANG: Recovery failed after 15s. Nuclear reload required.');
+          nuclearRecovery();
+        }
+      }, 15000);
+
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        console.log('[AUTH] Getting session...');
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
+        if (sessionError) {
+          console.error('[AUTH] Session error:', sessionError);
+          throw sessionError;
+        }
+
         if (session?.user) {
+          console.log('[AUTH] Session found, fetching profile for:', session.user.id);
           const profile = await fetchProfile(session.user.id);
           setUser(mapSupabaseUserToAppUser(session.user, profile));
         } else {
+          console.log('[AUTH] No active session found.');
           setUser(null);
         }
         
-        // SUCCESS: Clear the recovery flag to prevent future reloads from purging storage
+        console.log('[AUTH] Initialization complete.');
         sessionStorage.removeItem('sb_recovery_active');
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        console.error('[AUTH] Initialization failed:', error);
         setUser(null);
       } finally {
         clearTimeout(timeoutId);
@@ -167,15 +164,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     });
 
     return () => {
-      clearTimeout(timeoutId);
-      clearTimeout(recoveryTimeout);
       subscription.unsubscribe();
     };
   }, []);
 
   const signIn = async (email: string, password: string): Promise<void> => {
-    // Do NOT touch the shared `loading` state here — that's only for the initial
-    // session check. AuthPage manages its own button-level loading state.
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
     if (data.user) {
@@ -189,7 +182,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     password: string,
     additionalData?: Record<string, unknown>
   ): Promise<void> => {
-    // Do NOT touch the shared `loading` state here.
     let fullName = additionalData?.fullName as string;
     if (!fullName) {
       const firstName = (additionalData?.firstName as string) || '';
@@ -211,11 +203,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     if (error) throw error;
 
-    // data.session is null when email confirmation is required.
-    // Do NOT set user state in that case — the Supabase client has no JWT,
-    // so any subsequent DB write (cart, wishlist, etc.) would use the anon
-    // role and fail with RLS violations.  The caller (AuthPage) will
-    // detect this and show a "check your email" message instead.
     if (data.user && data.session) {
       const profile = await fetchProfile(data.user.id);
       setUser(mapSupabaseUserToAppUser(data.user, profile));
@@ -227,10 +214,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(true);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-
       setUser(null);
-      localStorage.removeItem('user_preferences');
-      localStorage.removeItem('cart_items');
     } catch (error: any) {
       throw error;
     } finally {
@@ -265,55 +249,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const updateProfile = async (updates: Partial<User>): Promise<void> => {
-    try {
-      if (!user) {
-        throw new Error('No user is currently authenticated');
-      }
+    if (!user) throw new Error('No user is currently authenticated');
 
-      // Update auth metadata if name changes
-      if (updates.fullName || updates.name) {
-        await supabase.auth.updateUser({
-          data: { full_name: updates.fullName || updates.name }
-        });
-      }
+    if (updates.fullName || updates.name) {
+      await supabase.auth.updateUser({
+        data: { full_name: updates.fullName || updates.name }
+      });
+    }
 
-      // Update profiles table
-      const profileUpdates: any = {};
-      if (updates.fullName || updates.name) profileUpdates.full_name = updates.fullName || updates.name;
-      if (updates.avatar) profileUpdates.avatar_url = updates.avatar;
-      if (updates.phone) profileUpdates.phone = updates.phone;
-      if (updates.dateOfBirth) profileUpdates.date_of_birth = updates.dateOfBirth;
-      if (updates.gender) profileUpdates.gender = updates.gender;
-      if (updates.preferredLanguage) profileUpdates.preferred_language = updates.preferredLanguage;
-      if (updates.newsletterSubscribed !== undefined) profileUpdates.newsletter_subscribed = updates.newsletterSubscribed;
+    const profileUpdates: any = {};
+    if (updates.fullName || updates.name) profileUpdates.full_name = updates.fullName || updates.name;
+    if (updates.avatar) profileUpdates.avatar_url = updates.avatar;
+    if (updates.phone) profileUpdates.phone = updates.phone;
+    if (updates.dateOfBirth) profileUpdates.date_of_birth = updates.dateOfBirth;
+    if (updates.gender) profileUpdates.gender = updates.gender;
+    if (updates.preferredLanguage) profileUpdates.preferred_language = updates.preferredLanguage;
+    if (updates.newsletterSubscribed !== undefined) profileUpdates.newsletter_subscribed = updates.newsletterSubscribed;
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .update(profileUpdates)
-        .eq('id', user.id)
-        .select()
-        .single();
+    const { data, error } = await supabase
+      .from('profiles')
+      .update(profileUpdates)
+      .eq('id', user.id)
+      .select()
+      .single();
 
-      if (error) throw error;
-      
-      const { data: { user: sbUser } } = await supabase.auth.getUser();
-      if (sbUser) {
-        setUser(mapSupabaseUserToAppUser(sbUser, data));
-      }
-    } catch (error: any) {
-      throw error;
+    if (error) throw error;
+    
+    const { data: { user: sbUser } } = await supabase.auth.getUser();
+    if (sbUser) {
+      setUser(mapSupabaseUserToAppUser(sbUser, data));
     }
   };
 
   const refreshUser = async (): Promise<void> => {
-    try {
-      const { data: { user: sbUser } } = await supabase.auth.getUser();
-      if (sbUser) {
-        const profile = await fetchProfile(sbUser.id);
-        setUser(mapSupabaseUserToAppUser(sbUser, profile));
-      }
-    } catch (error) {
-      console.error('Failed to refresh user:', error);
+    const { data: { user: sbUser } } = await supabase.auth.getUser();
+    if (sbUser) {
+      const profile = await fetchProfile(sbUser.id);
+      setUser(mapSupabaseUserToAppUser(sbUser, profile));
     }
   };
 
@@ -348,7 +320,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsMobileAuthOpen(false);
   };
 
-  // AuthModal methods (merged from AuthModalContext)
   const showAuthModal = (product: Product, action: 'cart' | 'wishlist' | 'compare') => {
     setSelectedProduct(product);
     setModalAction(action);
@@ -361,34 +332,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setSelectedProduct(null);
   };
 
-  const handleModalClose = () => {
-    hideAuthModal();
-  };
-
   const value: AuthContextType = {
-    user,
-    loading,
-    login,
-    logout,
-    register,
-    signIn,
-    signUp,
-    signOut,
-    resetPassword,
-    updatePassword,
-    resendVerification,
-    updateProfile,
-    refreshUser,
-    openMobileAuth,
-    closeMobileAuth,
-    isMobileAuthOpen,
-    mobileAuthMode,
-    // AuthModal methods (merged from AuthModalContext)
-    showAuthModal,
-    hideAuthModal,
-    isModalOpen,
-    modalAction,
-    selectedProduct
+    user, loading, login, logout, register, signIn, signUp, signOut,
+    resetPassword, updatePassword, resendVerification, updateProfile, refreshUser,
+    openMobileAuth, closeMobileAuth, isMobileAuthOpen, mobileAuthMode,
+    showAuthModal, hideAuthModal, isModalOpen, modalAction, selectedProduct
   };
 
   return (
@@ -397,7 +345,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       {isModalOpen && createPortal(
         <AuthModal
           isOpen={isModalOpen}
-          onClose={handleModalClose}
+          onClose={hideAuthModal}
           initialMode="login"
           action={modalAction}
           product={selectedProduct}

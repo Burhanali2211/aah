@@ -11,13 +11,22 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // auth.persistSession:true keeps the session alive across tabs.
 // detectSessionInUrl is set to false to prevent duplicate PKCE token exchanges 
 // on navigation which can cause 400 errors.
+// lock: null disables the GoTrue lock which often causes hangs on refresh.
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: false, // Prevents race conditions on mount/refresh
     storageKey: 'sb-aligarh-auth-token',
+    lock: async (name, acquire) => { return await acquire(); }, // No-op lock to prevent refresh hangs
   },
+  global: {
+    // Custom fetch for timeout management
+    fetch: (...args) => {
+      const [url, config] = args;
+      return fetch(url, { ...config, cache: 'no-store' });
+    }
+  }
 });
 
 
@@ -44,7 +53,7 @@ export const db = {
 
     let query = supabase
       .from('products')
-      .select('*', needsCount ? { count: 'exact' } : { count: 'none' });
+      .select('*', needsCount ? { count: 'exact' } : undefined);
 
     if (params?.categoryId) query = query.eq('category_id', params.categoryId);
     if (params?.featured)    query = query.eq('is_featured', true);
@@ -98,7 +107,7 @@ export const db = {
   async getFeaturedProducts(limit = 8) {
     const { data, error } = await supabase
       .from('products')
-      .select('*', { count: 'none' })
+      .select('*')
       .eq('is_featured', true)
       .order('created_at', { ascending: false })
       .limit(limit);
@@ -110,7 +119,7 @@ export const db = {
   async getLatestProducts(limit = 8) {
     const { data, error } = await supabase
       .from('products')
-      .select('*', { count: 'none' })
+      .select('*')
       .order('created_at', { ascending: false })
       .limit(limit);
 
@@ -121,7 +130,7 @@ export const db = {
   async getHomepageProducts(limit = 4) {
     const { data, error } = await supabase
       .from('products')
-      .select('*', { count: 'none' })
+      .select('*')
       .eq('show_on_homepage', true)
       .order('created_at', { ascending: false })
       .limit(limit);

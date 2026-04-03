@@ -264,55 +264,52 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     let isMounted = true;
     const initializeProducts = async () => {
+      console.log('[PRODUCTS] Starting initialization...');
       dispatch({ type: 'INITIALIZE_START' });
 
       // Set a hard timeout for product initialization (10 seconds)
       const timeoutId = setTimeout(() => {
-        if (isMounted) {
-          console.warn('Initial product loading timed out after 10s. Forcing UI to ready state.');
-          dispatch({ 
-            type: 'INITIALIZE_FINISH',
-            products: state.products,
-            featured: state.featuredProducts,
-            bestSellers: state.bestSellers,
-            latest: state.latestProducts,
-            categories: state.categories,
-            pagination: state.pagination
-          });
-        }
+        console.warn('[PRODUCTS] Initialization timeout (10s). Forcing UI state...');
+        dispatch({ 
+          type: 'INITIALIZE_FINISH',
+          products: state.products,
+          featured: state.featuredProducts,
+          bestSellers: state.bestSellers,
+          latest: state.latestProducts,
+          categories: state.categories,
+          pagination: state.pagination
+        });
       }, 10000);
 
       try {
+        console.log('[PRODUCTS] Fetching all data components...');
         const [catData, prodData, featData, lateData, bestData] = await Promise.all([
-          db.getCategories(),
-          db.getProducts({ page: 1, limit: 20 }),
-          db.getFeaturedProducts(8),
-          db.getLatestProducts(8),
-          db.getProducts({ bestSellers: true, limit: 8 })
+          db.getCategories().then(d => { console.log('[PRODUCTS] Received categories'); return d; }),
+          db.getProducts({ page: 1, limit: 20 }).then(d => { console.log('[PRODUCTS] Received products'); return d; }),
+          db.getFeaturedProducts(8).then(d => { console.log('[PRODUCTS] Received featured'); return d; }),
+          db.getLatestProducts(8).then(d => { console.log('[PRODUCTS] Received latest'); return d; }),
+          db.getProducts({ bestSellers: true, limit: 8 }).then(d => { console.log('[PRODUCTS] Received best-sellers'); return d; })
         ]);
 
-        if (isMounted) {
-          clearTimeout(timeoutId);
-          dispatch({
-            type: 'INITIALIZE_FINISH',
-            categories: catData.map(mapDbCategory),
-            products: prodData.data.map(mapDbProduct),
-            featured: featData.map(mapDbProduct),
-            latest: lateData.map(mapDbProduct),
-            bestSellers: bestData.data.map(mapDbProduct),
-            pagination: prodData.pagination
-          });
-        }
+        console.log('[PRODUCTS] Data fetching complete. Updating state...');
+        clearTimeout(timeoutId);
+        dispatch({
+          type: 'INITIALIZE_FINISH',
+          categories: catData.map(mapDbCategory),
+          products: prodData.data.map(mapDbProduct),
+          featured: featData.map(mapDbProduct),
+          latest: lateData.map(mapDbProduct),
+          bestSellers: bestData.data.map(mapDbProduct),
+          pagination: prodData.pagination
+        });
       } catch (err) {
-        console.error('Critical initialization error:', err);
-        if (isMounted) {
-          clearTimeout(timeoutId);
-          dispatch({ 
-            type: 'INITIALIZE_FINISH',
-            products: [], featured: [], latest: [], bestSellers: [], categories: [],
-            pagination: { page: 1, limit: 20, total: 0, pages: 0 }
-          });
-        }
+        console.error('[PRODUCTS] Critical initialization error:', err);
+        clearTimeout(timeoutId);
+        dispatch({ 
+          type: 'INITIALIZE_FINISH',
+          products: [], featured: [], latest: [], bestSellers: [], categories: [],
+          pagination: { page: 1, limit: 20, total: 0, pages: 0 }
+        });
       }
     };
 
