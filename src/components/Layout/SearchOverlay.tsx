@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Search, X, TrendingUp, ArrowRight, Leaf } from 'lucide-react';
 import { useProducts } from '../../contexts/ProductContext';
 import { useSettings } from '../../contexts/SettingsContext';
+import { normalizeImageUrl } from '../../utils/images';
 import ProductImage from '../Common/ProductImage';
 import { Product } from '../../types';
 
@@ -24,7 +25,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, i
   const navigate = useNavigate();
 
   const siteName = getSiteSetting('site_name') || 'Aligarh Attars';
-  const logoUrl = getSiteSetting('logo_url');
+  const logoUrl = normalizeImageUrl(getSiteSetting('logo_url'));
 
   // Sync initial query when overlay opens
   useEffect(() => {

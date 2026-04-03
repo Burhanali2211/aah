@@ -9,6 +9,8 @@ import { useCart } from '../../contexts/ShoppingContext';
 import { useWishlist } from '../../contexts/ShoppingContext';
 import { useSwipeGesture } from '../../hooks/useMobileGestures';
 import { useProducts } from '../../contexts/ProductContext';
+import { useSettings } from '../../contexts/SettingsContext';
+import { SiteLogo } from '../Common/SiteLogo';
 
 interface MobileNavigationProps {
   isOpen: boolean;
@@ -38,6 +40,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   const { itemCount } = useCart();
   const { items: wishlistItems } = useWishlist();
   const { categories } = useProducts();
+  const { getSiteSetting } = useSettings();
   const location = useLocation();
   const navigate = useNavigate();
   const navRef = useRef<HTMLDivElement>(null);
@@ -155,7 +158,12 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <span className="font-semibold text-lg text-gray-900">Menu</span>
+          <div className="flex items-center gap-3">
+            <SiteLogo size="md" />
+            <span className="font-black text-gray-900 tracking-tighter">
+              {getSiteSetting('site_name')?.split(' ')[0] || 'Aligarh'}<span className="text-amber-600">.</span>
+            </span>
+          </div>
           <button
             onClick={onClose}
             className="p-2 -mr-2 rounded-full text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"

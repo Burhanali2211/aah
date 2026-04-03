@@ -3,6 +3,8 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSettings } from '../contexts/SettingsContext';
+import { normalizeImageUrl } from '../utils/images';
+import { SiteLogo } from '../components/Common/SiteLogo';
 
 type AuthMode = 'login' | 'signup' | 'forgot';
 
@@ -91,7 +93,7 @@ const AuthPage: React.FC = () => {
   const location = useLocation();
 
   const siteName = getSiteSetting('site_name') || 'Aligarh Attars';
-  const logoUrl = getSiteSetting('logo_url');
+  const logoUrl = normalizeImageUrl(getSiteSetting('logo_url'));
   const isProduction = !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1');
 
   const sendEmail = (payload: object) => {
@@ -224,10 +226,9 @@ const AuthPage: React.FC = () => {
           backgroundSize: '28px 28px'
         }} />
         <div className="relative z-10 text-center max-w-xs">
-          <Link to="/" className="inline-flex items-center gap-3 mb-10">
-            {logoUrl && <img src={logoUrl} alt={siteName} className="h-12 w-12 object-contain rounded-xl"
-              onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />}
-            <span className="text-2xl font-bold text-white">{siteName}</span>
+          <Link to="/" className="inline-flex items-center gap-4 mb-10">
+            <SiteLogo size="xl" className="shadow-2xl" />
+            <span className="text-2xl font-bold text-white mb-0.5">{siteName}</span>
           </Link>
           <h2 className="text-3xl font-bold text-white leading-tight mb-4">
             {mode === 'signup' ? 'Join our community' : 'Welcome back'}
@@ -253,8 +254,7 @@ const AuthPage: React.FC = () => {
         {/* Top bar (mobile + desktop) */}
         <header className="flex items-center justify-between px-5 py-3 lg:px-8 lg:py-4 border-b border-gray-100 bg-white lg:bg-transparent">
           <Link to="/" className="flex items-center gap-2 lg:hidden">
-            {logoUrl && <img src={logoUrl} alt={siteName} className="h-8 w-8 object-contain rounded-lg"
-              onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />}
+            <SiteLogo size="sm" />
             <span className="font-semibold text-gray-900 text-[15px]">{siteName}</span>
           </Link>
           <Link to="/" className="hidden lg:inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors">

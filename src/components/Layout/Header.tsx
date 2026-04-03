@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useCart, useWishlist } from '../../contexts/ShoppingContext';
 import { useProducts } from '../../contexts/ProductContext';
 import { useSettings } from '../../contexts/SettingsContext';
+import { normalizeImageUrl } from '../../utils/images';
 import { Product } from '../../types';
 
 interface HeaderProps {
@@ -214,7 +215,7 @@ export const Header: React.FC<HeaderProps> = ({ onAuthClick, onCartClick }) => {
   const shopDropdownRef = useRef<HTMLDivElement>(null);
 
   const siteName = getSiteSetting('site_name') || 'Aligarh Attars';
-  const logoUrl = getSiteSetting('logo_url');
+  const logoUrl = normalizeImageUrl(getSiteSetting('logo_url'));
   const nameParts = siteName.trim().split(/\s+/);
   const nameFirst = nameParts[0];
   const nameRest = nameParts.slice(1).join(' ');
@@ -260,12 +261,14 @@ export const Header: React.FC<HeaderProps> = ({ onAuthClick, onCartClick }) => {
           onClick={() => window.scrollTo(0, 0)}
         >
           {logoUrl ? (
-            <img
-              src={logoUrl}
-              alt={siteName}
-              className="w-7 h-7 object-contain"
-              onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-            />
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg overflow-hidden bg-white shadow-sm border border-gray-100">
+              <img
+                src={logoUrl}
+                alt={siteName}
+                className="w-full h-full object-contain p-1"
+                onError={e => { (e.currentTarget as HTMLImageElement).parentElement!.style.display = 'none'; }}
+              />
+            </div>
           ) : (
             <Leaf className="w-6 h-6 text-gray-900 flex-shrink-0" />
           )}

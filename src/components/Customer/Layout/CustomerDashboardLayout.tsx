@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useSettings } from '../../../contexts/SettingsContext';
-import { isValidImageUrl } from '../../../utils/images';
+import { normalizeImageUrl, isValidImageUrl } from '../../../utils/images';
 
 interface CustomerDashboardLayoutProps {
   children: React.ReactNode;
@@ -50,7 +50,7 @@ export const CustomerDashboardLayout: React.FC<CustomerDashboardLayoutProps> = (
 }) => {
   const { user, logout } = useAuth();
   const { settings, getSiteSetting } = useSettings();
-  const logoUrl = getSiteSetting('logo_url');
+  const logoUrl = normalizeImageUrl(getSiteSetting('logo_url'));
   const siteName = getSiteSetting('site_name') || 'Aligarh Attar House';
   const location = useLocation();
   const navigate = useNavigate();
@@ -141,7 +141,7 @@ export const CustomerDashboardLayout: React.FC<CustomerDashboardLayoutProps> = (
               </div>
             )}
             <span className="text-lg font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-              {settings?.site_name || 'My Account'}
+              {siteName || 'My Account'}
             </span>
           </Link>
           <button

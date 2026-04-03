@@ -197,56 +197,38 @@ export const ShoppingProvider: React.FC<ShoppingProviderProps> = ({ children }) 
     } else {
       loadGuestCart();
     }
-  }, [user]);
+  }, [user, mergeGuestCartWithUserCart, loadGuestCart]);
 
   useEffect(() => {
     fetchCart();
-  }, [user]);
+  }, [user, fetchCart]);
 
   const addToCart = useCallback(async (product: Product, quantity: number = 1, variantId?: string) => {
+    if (!user) {
+      showNotification({
+        type: 'info',
+        title: 'Authentication Required',
+        message: 'Please log in to add items to your cart.'
+      });
+      return;
+    }
+
     try {
-      if (user) {
-        const existingItem = cartItems.find(
-          item => item.product.id === product.id && item.variantId === variantId
-        );
-        if (existingItem && existingItem.id) {
-          await db.updateCartItem(existingItem.id, existingItem.quantity + quantity);
-        } else {
-          await db.addToCart(user.id, product.id, quantity);
-        }
-        await fetchCart();
+      const existingItem = cartItems.find(
+        item => item.product.id === product.id && item.variantId === variantId
+      );
+      if (existingItem && existingItem.id) {
+        await db.updateCartItem(existingItem.id, existingItem.quantity + quantity);
       } else {
-        const existingItemIndex = guestCart.findIndex(
-          item => item.product.id === product.id && item.variantId === variantId
-        );
-
-        let updatedCart: CartItem[];
-        if (existingItemIndex >= 0) {
-          updatedCart = guestCart.map((item, index) =>
-            index === existingItemIndex
-              ? { ...item, quantity: item.quantity + quantity }
-              : item
-          );
-        } else {
-          const newItem: CartItem = {
-            id: `guest-${Date.now()}`,
-            product,
-            productId: product.id,
-            quantity,
-            variantId,
-          };
-          updatedCart = [...guestCart, newItem];
-        }
-
-        saveGuestCart(updatedCart);
-        setCartItems(updatedCart);
+        await db.addToCart(user.id, product.id, quantity);
       }
+      await fetchCart();
       showNotification({ type: 'success', title: 'Added to Cart', message: `${product.name} added to cart.` });
     } catch (error) {
       console.error('Error adding to cart:', error);
       showNotification({ type: 'error', title: 'Error', message: 'Failed to add to cart' });
     }
-  }, [user, cartItems, guestCart, fetchCart, saveGuestCart, showNotification]);
+  }, [user, cartItems, fetchCart, showNotification]);
 
   const updateQuantity = useCallback(async (itemId: string, quantity: number) => {
     try {

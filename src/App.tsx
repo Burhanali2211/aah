@@ -11,6 +11,7 @@ import { ProfessionalLoader } from '@/components/Common/ProfessionalLoader';
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { ProtectedRoute } from '@/components/Common/ProtectedRoute';
 import { PublicRoute } from '@/components/Common/PublicRoute';
+import { MetaManager } from '@/components/Common/MetaManager';
 
 // Lazy-loaded pages for code splitting - optimized for performance
 const HomePage = React.lazy(() => import('@/pages/HomePage'));
@@ -150,6 +151,7 @@ function App() {
       <CombinedProvider>
         <Router>
           <PageTracker />
+          <MetaManager />
           <GlobalMediaErrorHandler />
           <ScrollToTop />
           <Suspense fallback={<PageLoadingFallback />}>

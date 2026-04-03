@@ -21,39 +21,57 @@ SectionLoader.displayName = 'SectionLoader';
 /* ─── Deal Tiles: Bento layout ─── */
 const BENTO_TILES = [
   {
-    to: '/products?category=woven-bags',
-    img: 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=800&q=75',
+    to: '/products?category=premium-attars',
+    img: '/images/banners/banner1.jpg',
     overlay: 'bg-gradient-to-r from-black/70 via-black/30 to-transparent',
     tag: 'Trending Now',
-    title: 'Artisan Woven Bags',
-    sub: 'Sustainable jute & cotton craft',
+    title: 'Pure Premium Attars',
+    sub: 'Traditional Aligarh fragrance',
     wide: true,
   },
   {
-    to: '/products?category=handmade-baskets',
-    img: 'https://images.unsplash.com/photo-1591084728795-1149f32d9866?w=600&q=75',
+    to: '/products?category=natural-oudh',
+    img: '/images/banners/banner2.jpg',
     overlay: 'bg-gradient-to-t from-black/70 via-black/20 to-transparent',
-    tag: 'Home Decor',
-    title: 'Storage Baskets',
-    sub: 'Natural willow & straw',
+    tag: 'Rich Oudh',
+    title: 'Natural Oudh',
+    sub: 'Deep agarwood',
     wide: false,
   },
   {
-    to: '/products?category=woolen-items',
-    img: 'https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?w=600&q=75',
+    to: '/products?category=essential-oils',
+    img: '/images/banners/banner3.jpg',
     overlay: 'bg-gradient-to-t from-black/70 via-black/20 to-transparent',
     tag: 'New Season',
-    title: 'Hand Woolens',
-    sub: 'Soft textures & purses',
+    title: 'Essential Oils',
+    sub: 'Pure botanicals',
     wide: false,
   },
   {
-    to: '/deals',
-    img: 'https://images.unsplash.com/photo-1516550893923-42d28e5677af?w=800&q=75',
+    to: '/products?category=luxury-perfumes',
+    img: '/images/banners/banner4.jpg',
+    overlay: 'bg-gradient-to-t from-black/70 via-black/20 to-transparent',
+    tag: 'Elite',
+    title: 'Luxury Perfumes',
+    sub: 'Artisan blends',
+    wide: false,
+  },
+  {
+    to: '/products?category=pure-sandalwood',
+    img: '/images/banners/banner5.jpg',
+    overlay: 'bg-gradient-to-t from-black/70 via-black/20 to-transparent',
+    tag: 'Mysore Pure',
+    title: 'Sandalwood',
+    sub: 'Ancient oils',
+    wide: false,
+  },
+  {
+    to: '/products?category=incense-bakhoor',
+    img: '/images/banners/banner6.jpg',
     overlay: 'bg-gradient-to-r from-black/70 via-black/30 to-transparent',
-    tag: 'Bundle Offer',
-    title: 'Artisan Sets',
-    sub: 'Handpicked craft collections',
+    tag: 'Home Heritage',
+    title: 'Heritage Bakhoor',
+    sub: 'Premium home incense',
     wide: true,
   },
 ];
@@ -61,12 +79,12 @@ const BENTO_TILES = [
 const DealTiles: React.FC = memo(() => (
   <section className="bg-white w-full pt-0 pb-3">
     <div className="w-full px-3 sm:px-6 lg:px-8">
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         {BENTO_TILES.map((tile) => (
           <Link
             key={tile.title}
             to={tile.to}
-            className={`group relative overflow-hidden rounded-xl h-[140px] sm:h-[180px] md:h-[210px] ${tile.wide ? 'col-span-2 md:col-span-2' : 'col-span-1'}`}
+            className={`group relative overflow-hidden rounded-xl h-[120px] sm:h-[160px] md:h-[200px] ${tile.wide ? 'col-span-2 md:col-span-2' : 'col-span-1'}`}
           >
             <img
               src={tile.img}
@@ -75,12 +93,12 @@ const DealTiles: React.FC = memo(() => (
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
             <div className={`absolute inset-0 ${tile.overlay}`} />
-            <div className="absolute inset-0 flex flex-col justify-end p-3 sm:p-4">
-              <span className="text-[9px] sm:text-[10px] font-semibold tracking-widest text-white/60 uppercase mb-0.5">
+            <div className={`absolute inset-0 flex flex-col justify-end p-2 sm:p-4 ${tile.wide ? 'items-start text-left' : 'items-start text-left'}`}>
+              <span className="text-[8px] sm:text-[9px] font-semibold tracking-widest text-white/70 uppercase mb-0.5">
                 {tile.tag}
               </span>
-              <p className="text-white font-bold text-sm sm:text-lg leading-tight">{tile.title}</p>
-              <p className="text-white/70 text-[10px] sm:text-xs mt-0.5 leading-snug">{tile.sub}</p>
+              <p className={`text-white font-bold leading-tight ${tile.wide ? 'text-sm sm:text-2xl' : 'text-xs sm:text-base'}`}>{tile.title}</p>
+              <p className={`text-white/80 mt-0.5 leading-snug hidden sm:block ${tile.wide ? 'text-xs sm:text-sm' : 'text-[10px] sm:text-xs'}`}>{tile.sub}</p>
             </div>
           </Link>
         ))}
