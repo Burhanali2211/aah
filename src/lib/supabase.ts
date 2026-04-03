@@ -64,7 +64,6 @@ export const db = {
     }
 
     const { data, error, count } = await query
-      .eq('is_active', true)
       .range(offset, offset + limit - 1);
 
     if (error) throw error;
@@ -99,7 +98,6 @@ export const db = {
     const { data, error } = await supabase
       .from('products')
       .select('*', { count: 'none' })
-      .eq('is_active', true)
       .eq('is_featured', true)
       .order('created_at', { ascending: false })
       .limit(limit);
@@ -112,7 +110,6 @@ export const db = {
     const { data, error } = await supabase
       .from('products')
       .select('*', { count: 'none' })
-      .eq('is_active', true)
       .order('created_at', { ascending: false })
       .limit(limit);
 
@@ -124,11 +121,9 @@ export const db = {
     const { data, error } = await supabase
       .from('products')
       .select('*', { count: 'none' })
-      .eq('is_active', true)
       .eq('show_on_homepage', true)
       .order('created_at', { ascending: false })
-      .limit(limit)
-      .order('created_at', { ascending: false });
+      .limit(limit);
     
     if (error) throw error;
     return data;

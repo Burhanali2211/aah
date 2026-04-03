@@ -195,13 +195,19 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
         seller_id: product.sellerId
       };
 
+      console.log('[ProductContext] Creating new product:', payload);
       const { data, error } = await supabase
         .from('products')
         .insert([payload])
         .select()
         .single();
         
-      if (error) throw error;
+      if (error) {
+        console.error('[ProductContext] Error creating product:', error);
+        throw error;
+      };
+      
+      console.log('[ProductContext] Product created successfully:', data);
       
       // Refetch all to ensure consistency across homepage/catalog
       await Promise.all([
@@ -292,6 +298,8 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
       if (product.metaTitle !== undefined) payload.meta_title = product.metaTitle;
       if (product.metaDescription !== undefined) payload.meta_description = product.metaDescription;
 
+      console.log(`[ProductContext] Updating product ${product.id}`, payload);
+      
       const { data, error } = await supabase
         .from('products')
         .update(payload)
@@ -299,7 +307,12 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
         .select()
         .single();
         
-      if (error) throw error;
+      if (error) {
+        console.error('[ProductContext] Error updating product:', error);
+        throw error;
+      }
+      
+      console.log('[ProductContext] Product updated successfully:', data);
       
       // Refetch all to ensure consistency across homepage/catalog
       await Promise.all([
