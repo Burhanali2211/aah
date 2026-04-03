@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useReducer, ReactNode, useCallback, useEffect, useRef } from 'react';
 import { Product, ProductContextType, Category, Review } from '../types';
 import { supabase, db } from '../lib/supabase';
 import { useNotification } from './NotificationContext';
@@ -11,36 +11,70 @@ export const useProducts = () => {
   return context;
 };
 
-interface PaginationState {
-  page: number;
-  limit: number;
-  total: number;
-  pages: number;
+interface ProductState {
+  products: Product[];
+  featuredProducts: Product[];
+  bestSellers: Product[];
+  latestProducts: Product[];
+  categories: Category[];
+  loading: boolean;
+  featuredLoading: boolean;
+  bestSellersLoading: boolean;
+  latestLoading: boolean;
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
 }
 
-// Keys were used by cache, removed now.
+type ProductAction =
+  | { type: 'SET_PRODUCTS'; products: Product[]; pagination: ProductState['pagination'] }
+  | { type: 'SET_FEATURED'; products: Product[] }
+  | { type: 'SET_BEST_SELLERS'; products: Product[] }
+  | { type: 'SET_LATEST'; products: Product[] }
+  | { type: 'SET_CATEGORIES'; categories: Category[] }
+  | { type: 'SET_LOADING'; loading: boolean }
+  | { type: 'SET_FEATURED_LOADING'; loading: boolean }
+  | { type: 'SET_BEST_SELLERS_LOADING'; loading: boolean }
+  | { type: 'SET_LATEST_LOADING'; loading: boolean };
+
+const initialState: ProductState = {
+  products: [],
+  featuredProducts: [],
+  bestSellers: [],
+  latestProducts: [],
+  categories: [],
+  loading: false,
+  featuredLoading: false,
+  bestSellersLoading: false,
+  latestLoading: false,
+  pagination: { page: 1, limit: 20, total: 0, pages: 0 },
+};
+
+function productReducer(state: ProductState, action: ProductAction): ProductState {
+  switch (action.type) {
+    case 'SET_PRODUCTS': return { ...state, products: action.products, pagination: action.pagination, loading: false };
+    case 'SET_FEATURED': return { ...state, featuredProducts: action.products, featuredLoading: false };
+    case 'SET_BEST_SELLERS': return { ...state, bestSellers: action.products, bestSellersLoading: false };
+    case 'SET_LATEST': return { ...state, latestProducts: action.products, latestLoading: false };
+    case 'SET_CATEGORIES': return { ...state, categories: action.categories, loading: false };
+    case 'SET_LOADING': return { ...state, loading: action.loading };
+    case 'SET_FEATURED_LOADING': return { ...state, featuredLoading: action.loading };
+    case 'SET_BEST_SELLERS_LOADING': return { ...state, bestSellersLoading: action.loading };
+    case 'SET_LATEST_LOADING': return { ...state, latestLoading: action.loading };
+    default: return state;
+  }
+}
 
 export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // ── State initialised from cache immediately — zero loading flash ──
-  const [products, setProducts]           = useState<Product[]>([]);
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-  const [bestSellers, setBestSellers]     = useState<Product[]>([]);
-  const [latestProducts, setLatestProducts] = useState<Product[]>([]);
-  const [categories, setCategories]       = useState<Category[]>([]);
-  const [loading, setLoading]             = useState(true);
-  const [featuredLoading, setFeaturedLoading] = useState(true);
-  const [bestSellersLoading, setBestSellersLoading] = useState(true);
-  const [latestLoading, setLatestLoading] = useState(true);
-  const [pagination, setPagination]       = useState<PaginationState>({ page: 1, limit: 20, total: 0, pages: 0 });
+  const [state, dispatch] = useReducer(productReducer, initialState);
   const { showError } = useNotification();
-
-  // Track whether initial homepage fetch has been kicked off
   const initFetched = useRef(false);
 
-  const mapDbProductToAppProduct = useCallback((dbProduct: any): Product => {
-    const images = Array.isArray(dbProduct.images) ? dbProduct.images
-      : dbProduct.image_url ? [dbProduct.image_url]
-      : [];
+  const mapDbProduct = (dbProduct: any): Product => {
+    const images = Array.isArray(dbProduct.images) ? dbProduct.images : (dbProduct.image_url ? [dbProduct.image_url] : []);
     return {
       id: dbProduct.id,
       name: dbProduct.name,
@@ -71,9 +105,9 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
       createdAt: dbProduct.created_at ? new Date(dbProduct.created_at) : new Date(0),
       updatedAt: dbProduct.updated_at ? new Date(dbProduct.updated_at) : undefined,
     };
-  }, []);
+  };
 
-  const mapDbCategoryToAppCategory = useCallback((dbCategory: any): Category => ({
+  const mapDbCategory = (dbCategory: any): Category => ({
     id: dbCategory.id,
     name: dbCategory.name,
     slug: dbCategory.slug,
@@ -85,363 +119,187 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
     productCount: dbCategory.product_count || 0,
     createdAt: dbCategory.created_at ? new Date(dbCategory.created_at) : undefined,
     updatedAt: dbCategory.updated_at ? new Date(dbCategory.updated_at) : undefined,
-  }), []);
+  });
 
   const fetchCategories = useCallback(async () => {
-    setLoading(true);
+    dispatch({ type: 'SET_LOADING', loading: true });
     try {
       const data = await db.getCategories();
-      const mapped = data.map(mapDbCategoryToAppCategory);
-      setCategories(mapped);
+      dispatch({ type: 'SET_CATEGORIES', categories: data.map(mapDbCategory) });
     } catch (error) {
-      showError('Failed to load categories', error instanceof Error ? error.message : undefined);
-    } finally {
-      setLoading(false);
+      showError('Failed to load categories');
+      dispatch({ type: 'SET_LOADING', loading: false });
     }
-  }, [showError, mapDbCategoryToAppCategory]);
+  }, [showError]);
 
   const fetchProducts = useCallback(async (page: number = 1, limit: number = 20, filters?: any) => {
-    setLoading(true);
+    dispatch({ type: 'SET_LOADING', loading: true });
     try {
       const response = await db.getProducts({ page, limit, ...filters });
-      const mapped = response.data.map(mapDbProductToAppProduct);
-      setProducts(mapped);
-      setPagination(response.pagination);
+      dispatch({ type: 'SET_PRODUCTS', products: response.data.map(mapDbProduct), pagination: response.pagination });
     } catch (error) {
-      showError('Failed to load products', error instanceof Error ? error.message : undefined);
-    } finally {
-      setLoading(false);
+      showError('Failed to load products');
+      dispatch({ type: 'SET_LOADING', loading: false });
     }
-  }, [showError, mapDbProductToAppProduct]);
+  }, [showError]);
 
   const fetchFeaturedProducts = useCallback(async (limit: number = 8) => {
-    setFeaturedLoading(true);
+    dispatch({ type: 'SET_FEATURED_LOADING', loading: true });
     try {
       const data = await db.getFeaturedProducts(limit);
-      const mapped = data.map(mapDbProductToAppProduct);
-      setFeaturedProducts(mapped);
+      dispatch({ type: 'SET_FEATURED', products: data.map(mapDbProduct) });
     } catch (error) {
-      showError('Failed to load featured products', error instanceof Error ? error.message : undefined);
-    } finally {
-      setFeaturedLoading(false);
+      showError('Failed to load featured products');
+      dispatch({ type: 'SET_FEATURED_LOADING', loading: false });
     }
-  }, [showError, mapDbProductToAppProduct]);
+  }, [showError]);
 
   const fetchBestSellers = useCallback(async (limit: number = 8) => {
-    setBestSellersLoading(true);
+    dispatch({ type: 'SET_BEST_SELLERS_LOADING', loading: true });
     try {
       const response = await db.getProducts({ bestSellers: true, limit });
-      const mapped = response.data.map(mapDbProductToAppProduct);
-      setBestSellers(mapped);
+      dispatch({ type: 'SET_BEST_SELLERS', products: response.data.map(mapDbProduct) });
     } catch (error) {
-      showError('Failed to load best sellers', error instanceof Error ? error.message : undefined);
-    } finally {
-      setBestSellersLoading(false);
+      showError('Failed to load best sellers');
+      dispatch({ type: 'SET_BEST_SELLERS_LOADING', loading: false });
     }
-  }, [showError, mapDbProductToAppProduct]);
+  }, [showError]);
 
   const fetchLatestProducts = useCallback(async (limit: number = 8) => {
-    setLatestLoading(true);
+    dispatch({ type: 'SET_LATEST_LOADING', loading: true });
     try {
       const data = await db.getLatestProducts(limit);
-      const mapped = data.map(mapDbProductToAppProduct);
-      setLatestProducts(mapped);
+      dispatch({ type: 'SET_LATEST', products: data.map(mapDbProduct) });
     } catch (error) {
-      showError('Failed to load latest products', error instanceof Error ? error.message : undefined);
-    } finally {
-      setLatestLoading(false);
-    }
-  }, [showError, mapDbProductToAppProduct]);
-
-  const fetchReviewsForProduct = useCallback(async (productId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('reviews')
-        .select('*, profiles(full_name, avatar_url)')
-        .eq('product_id', productId)
-        .eq('is_approved', true)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      showError('Failed to load reviews', error instanceof Error ? error.message : undefined);
-      return [];
+      showError('Failed to load latest products');
+      dispatch({ type: 'SET_LATEST_LOADING', loading: false });
     }
   }, [showError]);
 
   const addProduct = useCallback(async (product: Partial<Product>) => {
     try {
-      const payload = {
-        name: product.name,
-        slug: product.slug,
-        description: product.description,
-        short_description: product.shortDescription,
-        price: product.price,
-        original_price: product.originalPrice,
-        category_id: product.categoryId,
-        images: product.images,
-        stock: product.stock,
-        min_stock_level: product.minStockLevel,
-        sku: product.sku,
-        weight: product.weight,
-        dimensions: product.dimensions,
-        tags: product.tags,
-        specifications: product.specifications,
-        is_featured: product.featured,
-        show_on_homepage: product.showOnHomepage ?? true,
-        is_active: product.isActive ?? true,
-        meta_title: product.metaTitle,
-        meta_description: product.metaDescription,
-        seller_id: product.sellerId
-      };
-
-      console.log('[ProductContext] Creating new product:', payload);
-      const { data, error } = await supabase
-        .from('products')
-        .insert([payload])
-        .select()
-        .single();
-        
-      if (error) {
-        console.error('[ProductContext] Error creating product:', error);
-        throw error;
-      };
-      
-      console.log('[ProductContext] Product created successfully:', data);
-      
-      // Refetch all to ensure consistency across homepage/catalog
-      await Promise.all([
-        fetchProducts(1, 20, undefined),
-        fetchFeaturedProducts(8),
-        fetchLatestProducts(8),
-        fetchBestSellers(8)
-      ]);
-      
-      return mapDbProductToAppProduct(data);
-    } catch (error) {
-      showError('Failed to create product', error instanceof Error ? error.message : undefined);
-      throw error;
-    }
-  }, [showError, fetchProducts, fetchFeaturedProducts, fetchLatestProducts, fetchBestSellers, mapDbProductToAppProduct]);
-
-  const submitReview = useCallback(async (review: Omit<Review, 'id' | 'createdAt' | 'profiles'>) => {
-    try {
-      const { error } = await supabase
-        .from('reviews')
-        .insert([{ product_id: review.productId, user_id: review.userId, rating: review.rating, comment: review.comment, title: review.title }]);
+      const { data, error } = await supabase.from('products').insert([{
+        name: product.name, slug: product.slug, description: product.description,
+        short_description: product.shortDescription, price: product.price,
+        original_price: product.originalPrice, category_id: product.categoryId,
+        images: product.images, stock: product.stock, min_stock_level: product.minStockLevel,
+        sku: product.sku, weight: product.weight, dimensions: product.dimensions,
+        tags: product.tags, specifications: product.specifications,
+        is_featured: product.featured, show_on_homepage: product.showOnHomepage ?? true,
+        is_active: product.isActive ?? true, meta_title: product.metaTitle,
+        meta_description: product.metaDescription, seller_id: product.sellerId
+      }]).select().single();
       if (error) throw error;
+      await Promise.all([fetchProducts(), fetchFeaturedProducts(), fetchLatestProducts()]);
+      return mapDbProduct(data);
     } catch (error) {
-      showError('Failed to submit review', error instanceof Error ? error.message : undefined);
+      showError('Failed to create product');
       throw error;
     }
-  }, [showError]);
-
-  const getProductById = useCallback(async (id: string) => {
-    try {
-      const data = await db.getProduct(id);
-      return data ? mapDbProductToAppProduct(data) : null;
-    } catch (error) {
-      showError('Failed to load product', error instanceof Error ? error.message : undefined);
-      return null;
-    }
-  }, [showError, mapDbProductToAppProduct]);
-
-  const searchProducts = useCallback(async (query: string) => {
-    try {
-      setLoading(true);
-      const response = await db.getProducts({ search: query, limit: 50 });
-      setProducts(response.data.map(mapDbProductToAppProduct));
-      setPagination(response.pagination);
-    } catch (error) {
-      showError('Search failed', error instanceof Error ? error.message : undefined);
-    } finally {
-      setLoading(false);
-    }
-  }, [showError, mapDbProductToAppProduct]);
-
-  const filterByCategory = useCallback(async (categoryId: string) => {
-    try {
-      setLoading(true);
-      const response = await db.getProducts({ categoryId, limit: 50 });
-      setProducts(response.data.map(mapDbProductToAppProduct));
-      setPagination(response.pagination);
-    } catch (error) {
-      showError('Filter failed', error instanceof Error ? error.message : undefined);
-    } finally {
-      setLoading(false);
-    }
-  }, [showError, mapDbProductToAppProduct]);
-
-  const createProduct = useCallback(async (data: Partial<Product>) => addProduct(data), [addProduct]);
+  }, [showError, fetchProducts, fetchFeaturedProducts, fetchLatestProducts]);
 
   const updateProduct = useCallback(async (product: Partial<Product> & { id: string }) => {
     try {
-      const payload: any = {};
-      if (product.name !== undefined) payload.name = product.name;
-      if (product.slug !== undefined) payload.slug = product.slug;
-      if (product.description !== undefined) payload.description = product.description;
-      if (product.shortDescription !== undefined) payload.short_description = product.shortDescription;
-      if (product.price !== undefined) payload.price = product.price;
-      if (product.originalPrice !== undefined) payload.original_price = product.originalPrice;
-      if (product.categoryId !== undefined) payload.category_id = product.categoryId;
-      if (product.images !== undefined) payload.images = product.images;
-      if (product.stock !== undefined) payload.stock = product.stock;
-      if (product.minStockLevel !== undefined) payload.min_stock_level = product.minStockLevel;
-      if (product.sku !== undefined) payload.sku = product.sku;
-      if (product.weight !== undefined) payload.weight = product.weight;
-      if (product.dimensions !== undefined) payload.dimensions = product.dimensions;
-      if (product.tags !== undefined) payload.tags = product.tags;
-      if (product.specifications !== undefined) payload.specifications = product.specifications;
-      if (product.featured !== undefined) payload.is_featured = product.featured;
-      if (product.showOnHomepage !== undefined) payload.show_on_homepage = product.showOnHomepage;
-      if (product.isActive !== undefined) payload.is_active = product.isActive;
-      if (product.metaTitle !== undefined) payload.meta_title = product.metaTitle;
-      if (product.metaDescription !== undefined) payload.meta_description = product.metaDescription;
-
-      console.log(`[ProductContext] Updating product ${product.id}`, payload);
-      
-      const { data, error } = await supabase
-        .from('products')
-        .update(payload)
-        .eq('id', product.id)
-        .select()
-        .single();
-        
-      if (error) {
-        console.error('[ProductContext] Error updating product:', error);
-        throw error;
-      }
-      
-      console.log('[ProductContext] Product updated successfully:', data);
-      
-      // Refetch all to ensure consistency across homepage/catalog
-      await Promise.all([
-        fetchProducts(pagination?.page || 1, 20, undefined),
-        fetchFeaturedProducts(8),
-        fetchLatestProducts(8),
-        fetchBestSellers(8)
-      ]);
-      
-      return mapDbProductToAppProduct(data);
+      const { data, error } = await supabase.from('products').update({
+        name: product.name, slug: product.slug, description: product.description,
+        short_description: product.shortDescription, price: product.price,
+        original_price: product.originalPrice, category_id: product.categoryId,
+        images: product.images, stock: product.stock, min_stock_level: product.minStockLevel,
+        sku: product.sku, weight: product.weight, dimensions: product.dimensions,
+        tags: product.tags, specifications: product.specifications,
+        is_featured: product.featured, show_on_homepage: product.showOnHomepage,
+        is_active: product.isActive, meta_title: product.metaTitle,
+        meta_description: product.metaDescription
+      }).eq('id', product.id).select().single();
+      if (error) throw error;
+      await Promise.all([fetchProducts(), fetchFeaturedProducts(), fetchLatestProducts()]);
+      return mapDbProduct(data);
     } catch (error) {
-      showError('Failed to update product', error instanceof Error ? error.message : undefined);
+      showError('Failed to update product');
       throw error;
     }
-  }, [showError, fetchProducts, fetchFeaturedProducts, fetchLatestProducts, fetchBestSellers, pagination, mapDbProductToAppProduct]);
+  }, [showError, fetchProducts, fetchFeaturedProducts, fetchLatestProducts]);
 
   const deleteProduct = useCallback(async (id: string) => {
     try {
-      // Remove FK references before deleting the product to avoid integrity constraint violations
       await Promise.allSettled([
         supabase.from('cart_items').delete().eq('product_id', id),
         supabase.from('wishlist_items').delete().eq('product_id', id),
         supabase.from('order_items').delete().eq('product_id', id),
         supabase.from('reviews').delete().eq('product_id', id),
       ]);
-
       const { error } = await supabase.from('products').delete().eq('id', id);
       if (error) throw error;
-      
-      // Refetch all to ensure consistency across homepage/catalog
+      await Promise.all([fetchProducts(), fetchFeaturedProducts(), fetchLatestProducts()]);
+    } catch (error) {
+      showError('Failed to delete product');
+      throw error;
+    }
+  }, [showError, fetchProducts, fetchFeaturedProducts, fetchLatestProducts]);
+
+  useEffect(() => {
+    if (initFetched.current) return;
+    initFetched.current = true;
+    (async () => {
+      await fetchCategories();
+      await fetchProducts(1, 20);
       await Promise.all([
-        fetchProducts(pagination?.page || 1, 20, undefined),
         fetchFeaturedProducts(8),
         fetchLatestProducts(8),
         fetchBestSellers(8)
       ]);
-    } catch (error) {
-      showError('Failed to delete product', error instanceof Error ? error.message : undefined);
-      throw error;
-    }
-  }, [showError, fetchProducts, fetchFeaturedProducts, fetchLatestProducts, fetchBestSellers, pagination]);
+    })();
+    return () => { initFetched.current = false; };
+  }, [fetchCategories, fetchProducts, fetchFeaturedProducts, fetchLatestProducts, fetchBestSellers]);
 
-  const createCategory = useCallback(async (data: Partial<Category>) => {
-    try {
-      const { data: category, error } = await supabase
-        .from('categories')
-        .insert([{ name: data.name, slug: data.slug, description: data.description, image_url: data.imageUrl, parent_id: data.parentId, is_active: data.isActive, sort_order: data.sortOrder }])
-        .select()
-        .single();
+  const value: ProductContextType = {
+    ...state,
+    fetchProducts, fetchFeaturedProducts, fetchBestSellers, fetchLatestProducts,
+    fetchReviewsForProduct: async (id) => {
+      const { data } = await supabase.from('reviews').select('*, profiles(full_name, avatar_url)').eq('product_id', id).eq('is_approved', true).order('created_at', { ascending: false });
+      return data || [];
+    },
+    fetchCategories,
+    addProduct, createProduct: addProduct,
+    submitReview: async (review) => {
+      await supabase.from('reviews').insert([{ product_id: review.productId, user_id: review.userId, rating: review.rating, comment: review.comment, title: review.title }]);
+    },
+    getProductById: async (id) => {
+      const data = await db.getProduct(id);
+      return data ? mapDbProduct(data) : null;
+    },
+    searchProducts: async (query) => {
+      dispatch({ type: 'SET_LOADING', loading: true });
+      const response = await db.getProducts({ search: query, limit: 50 });
+      dispatch({ type: 'SET_PRODUCTS', products: response.data.map(mapDbProduct), pagination: response.pagination });
+    },
+    filterByCategory: async (categoryId) => {
+      dispatch({ type: 'SET_LOADING', loading: true });
+      const response = await db.getProducts({ categoryId, limit: 50 });
+      dispatch({ type: 'SET_PRODUCTS', products: response.data.map(mapDbProduct), pagination: response.pagination });
+    },
+    updateProduct, deleteProduct,
+    createCategory: async (data) => {
+      const { data: category, error } = await supabase.from('categories').insert([data]).select().single();
       if (error) throw error;
       await fetchCategories();
-      return mapDbCategoryToAppCategory(category);
-    } catch (error) {
-      showError('Failed to create category', error instanceof Error ? error.message : undefined);
-      throw error;
-    }
-  }, [showError, fetchCategories, mapDbCategoryToAppCategory]);
-
-  const updateCategory = useCallback(async (id: string, data: Partial<Category>) => {
-    try {
-      const { data: category, error } = await supabase
-        .from('categories')
-        .update({ name: data.name, slug: data.slug, description: data.description, image_url: data.imageUrl, parent_id: data.parentId, is_active: data.isActive, sort_order: data.sortOrder })
-        .eq('id', id)
-        .select()
-        .single();
+      return mapDbCategory(category);
+    },
+    updateCategory: async (id, data) => {
+      const { data: category, error } = await supabase.from('categories').update(data).eq('id', id).select().single();
       if (error) throw error;
       await fetchCategories();
-      return mapDbCategoryToAppCategory(category);
-    } catch (error) {
-      showError('Failed to update category', error instanceof Error ? error.message : undefined);
-      throw error;
-    }
-  }, [showError, fetchCategories, mapDbCategoryToAppCategory]);
-
-  const deleteCategory = useCallback(async (id: string) => {
-    try {
+      return mapDbCategory(category);
+    },
+    deleteCategory: async (id) => {
       const { error } = await supabase.from('categories').delete().eq('id', id);
       if (error) throw error;
       await fetchCategories();
-    } catch (error) {
-      showError('Failed to delete category', error instanceof Error ? error.message : undefined);
-      throw error;
-    }
-  }, [showError, fetchCategories]);
-
-  const nextPage     = useCallback(() => { if (pagination?.page < pagination?.pages) fetchProducts(pagination.page + 1); }, [pagination, fetchProducts]);
-  const previousPage = useCallback(() => { if (pagination?.page > 1) fetchProducts(pagination.page - 1); }, [pagination, fetchProducts]);
-  const goToPage     = useCallback((page: number) => { if (page >= 1 && page <= pagination?.pages) fetchProducts(page); }, [pagination, fetchProducts]);
-
-  // ── Initial data load — fire once, sequenced to avoid auth lock contention ──
-  // All 5 Supabase calls used to fire simultaneously via Promise.all, causing
-  // them to compete for the GoTrue auth token lock and triggering the
-  // "Lock was not released within 5000ms" warning.
-  //
-  // Fix: categories + products first (needed for immediate render), then the
-  // remaining sections staggered with a small delay so the lock is free.
-  useEffect(() => {
-    if (initFetched.current) return;
-    initFetched.current = true;
-
-    // Phase 1: critical data — show UI immediately
-    Promise.all([
-      fetchCategories(),
-      fetchProducts(1, 20, undefined),
-      fetchFeaturedProducts(8),
-    ]).then(() => {
-      // Phase 2: below-the-fold sections — fetch after lock is free
-      fetchLatestProducts(8);
-      fetchBestSellers(8);
-    });
-
-    return () => { initFetched.current = false; };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const value: ProductContextType = {
-    products, featuredProducts, bestSellers, latestProducts, categories,
-    loading, featuredLoading, bestSellersLoading, latestLoading, pagination,
-    fetchProducts, fetchFeaturedProducts, fetchBestSellers, fetchLatestProducts,
-    fetchReviewsForProduct, fetchCategories,
-    addProduct, submitReview, getProductById, searchProducts, filterByCategory,
-    createProduct, updateProduct, deleteProduct,
-    createCategory, updateCategory, deleteCategory,
-    nextPage, previousPage, goToPage
+    },
+    nextPage: () => { if (state.pagination.page < state.pagination.pages) fetchProducts(state.pagination.page + 1); },
+    previousPage: () => { if (state.pagination.page > 1) fetchProducts(state.pagination.page - 1); },
+    goToPage: (page) => { if (page >= 1 && page <= state.pagination.pages) fetchProducts(page); },
   };
 
-  return (
-    <ProductContext.Provider value={value}>
-      {children}
-    </ProductContext.Provider>
-  );
+  return <ProductContext.Provider value={value}>{children}</ProductContext.Provider>;
 };

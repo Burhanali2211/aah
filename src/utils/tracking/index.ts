@@ -8,11 +8,11 @@
  */
 
 import ReactGA from 'react-ga4';
-import { performanceMonitor } from '../performance';
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 // ==================== GOOGLE ANALYTICS INITIALIZATION ====================
 
-// Track whether GA has been successfully initialized
 let gaInitialized = false;
 
 /**
@@ -22,7 +22,6 @@ export const initGA = (measurementId?: string) => {
   const gaId = measurementId || import.meta.env.VITE_GA_MEASUREMENT_ID;
 
   if (!gaId) {
-    // Only warn in production - silent in development
     if (import.meta.env.PROD) {
       console.warn('Google Analytics Measurement ID not found. Analytics disabled.');
     }
@@ -37,13 +36,7 @@ export const initGA = (measurementId?: string) => {
       }
     });
     gaInitialized = true;
-
-    // Only log in development
-    if (import.meta.env.DEV) {
-      console.log('Google Analytics initialized:', gaId);
-    }
   } catch (error) {
-    // Silently fail if blocked by ad blocker in development
     if (import.meta.env.PROD) {
       console.error('Failed to initialize Google Analytics:', error);
     }
@@ -64,9 +57,7 @@ export const trackPageView = (path: string, title?: string) => {
       title: title || document.title
     });
   } catch (error) {
-    if (import.meta.env.DEV) {
-      console.warn('Failed to track page view:', error);
-    }
+    // silent
   }
 };
 
@@ -296,14 +287,6 @@ interface PageViewEvent {
   url: string;
   referrer: string;
   timestamp: number;
-  loadTime?: number;
-}
-
-interface ConversionEvent {
-  type: string;
-  value?: number;
-  timestamp: number;
-  metadata?: Record<string, any>;
 }
 
 /**
@@ -312,7 +295,6 @@ interface ConversionEvent {
 class Analytics {
   private userInteractions: UserInteractionEvent[] = [];
   private pageViews: PageViewEvent[] = [];
-  private conversions: ConversionEvent[] = [];
   private isEnabled: boolean = true;
 
   constructor() {
@@ -324,36 +306,21 @@ class Analytics {
       this.isEnabled = false;
       return;
     }
-
-    // Track page views
     this.trackPageView();
-
-    // Set up event listeners for user interactions
     this.setupEventListeners();
   }
 
   private trackPageView() {
     if (!this.isEnabled) return;
-
-    const pageView: PageViewEvent = {
+    this.pageViews.push({
       url: window.location.href,
       referrer: document.referrer,
       timestamp: Date.now()
-    };
-
-    // Get page load time if available
-    const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-    if (navigation && navigation.loadEventEnd && navigation.fetchStart) {
-      pageView.loadTime = navigation.loadEventEnd - navigation.fetchStart;
-    }
-
-    this.pageViews.push(pageView);
+    });
   }
 
   private setupEventListeners() {
     if (typeof window === 'undefined') return;
-
-    // Track clicks
     document.addEventListener('click', (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       this.recordUserInteraction('click', target.tagName, {
@@ -361,8 +328,6 @@ class Analytics {
         class: target.className
       });
     });
-
-    // Track form submissions
     document.addEventListener('submit', (e: SubmitEvent) => {
       const target = e.target as HTMLElement;
       this.recordUserInteraction('submit', target.tagName, {
@@ -374,38 +339,19 @@ class Analytics {
 
   recordUserInteraction(type: string, element: string, metadata?: Record<string, any>) {
     if (!this.isEnabled) return;
-
-    this.userInteractions.push({
-      type,
-      element,
-      timestamp: Date.now(),
-      metadata
-    });
-  }
-
-  recordConversion(type: string, value?: number, metadata?: Record<string, any>) {
-    if (!this.isEnabled) return;
-
-    this.conversions.push({
-      type,
-      value,
-      timestamp: Date.now(),
-      metadata
-    });
+    this.userInteractions.push({ type, element, timestamp: Date.now(), metadata });
   }
 
   getAnalytics() {
     return {
       userInteractions: this.userInteractions,
-      pageViews: this.pageViews,
-      conversions: this.conversions
+      pageViews: this.pageViews
     };
   }
 
   clearAnalytics() {
     this.userInteractions = [];
     this.pageViews = [];
-    this.conversions = [];
   }
 }
 
@@ -414,17 +360,12 @@ export const analytics = new Analytics();
 
 // ==================== REACT HOOKS ====================
 
-import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-
 /**
  * Hook to automatically track page views with Google Analytics
  */
 export const usePageTracking = () => {
   const location = useLocation();
-
   useEffect(() => {
-    // Track page view on route change
     trackPageView(location.pathname + location.search, document.title);
   }, [location]);
 };

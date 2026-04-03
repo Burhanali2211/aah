@@ -9,8 +9,6 @@ services:
       - "5000:5000"
     env_file:
       - .env.docker
-    depends_on:
-      - redis
     volumes:
       - ./uploads:/app/uploads
     restart: always
@@ -26,12 +24,3 @@ services:
     depends_on:
       - backend
     restart: always
-
-  redis:
-    image: redis:alpine
-    ports:
-      - "6379:6379"
-    restart: always
-
-# For Development (Optional override)
-# To use development mode, run: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
