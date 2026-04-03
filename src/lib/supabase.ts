@@ -8,26 +8,37 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // Single shared client — never call createClient() anywhere else in the app.
-// auth.persistSession:true keeps the session alive across tabs.
-// detectSessionInUrl is set to false to prevent duplicate PKCE token exchanges 
-// on navigation which can cause 400 errors.
-// lock: null disables the GoTrue lock which often causes hangs on refresh.
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: false, // Prevents race conditions on mount/refresh
-    storageKey: 'sb-aligarh-auth-token',
-    lock: async (name, acquire) => { return await acquire(); }, // No-op lock to prevent refresh hangs
-  },
-  global: {
-    // Custom fetch for timeout management
-    fetch: (...args) => {
-      const [url, config] = args;
-      return fetch(url, { ...config, cache: 'no-store' });
+const getSupabaseConfig = () => {
+  const config = {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: false,
+      storageKey: 'sb-aligarh-auth-token',
+    },
+    global: {
+      fetch: (...args: any[]) => {
+        const [url, config] = args;
+        return fetch(url, { ...config, cache: 'no-store' });
+      }
+    }
+  };
+
+  // If we are on a refresh and the recovery flag was set in main.tsx, 
+  // we must purge the token BEFORE createClient is called to prevent the internal lock hang.
+  if (typeof window !== 'undefined') {
+    const entries = performance.getEntriesByType("navigation");
+    const isRefresh = entries.length > 0 && (entries[0] as PerformanceNavigationTiming).type === 'reload';
+    if (isRefresh && sessionStorage.getItem('sb_recovery_active')) {
+      console.warn('[SUPABASE] Recovery mode active. Purging session token to prevent hang.');
+      localStorage.removeItem('sb-aligarh-auth-token');
     }
   }
-});
+
+  return config;
+};
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, getSupabaseConfig());
 
 
 // Helper functions for common operations
