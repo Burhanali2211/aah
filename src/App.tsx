@@ -73,21 +73,6 @@ const PageTracker = () => {
 };
 
 function App() {
-  // Unregister any Service Workers on mount to prevent caching issues
-  useEffect(() => {
-    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(registrations => {
-        registrations.forEach(registration => {
-          registration.unregister().catch(() => {
-            // Ignore errors during unregistration
-          });
-        });
-      }).catch(() => {
-        // Ignore errors
-      });
-    }
-  }, []);
-
   // Handle media errors globally
   useEffect(() => {
     const handleMediaError = (e: Event) => {

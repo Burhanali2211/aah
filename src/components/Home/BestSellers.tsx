@@ -1,5 +1,5 @@
 import React, { useEffect, memo } from 'react';
-import { Star, TrendingUp, ArrowRight, Flame, Tag } from 'lucide-react';
+import { Star, TrendingUp, ArrowRight, Flame, Tag, ShoppingBag } from 'lucide-react';
 import { useProducts } from '../../contexts/ProductContext';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../contexts/ShoppingContext';
@@ -7,13 +7,9 @@ import { useAuth } from '../../contexts/AuthContext';
 import { BuyNowButton } from '../Product/BuyNowButton';
 
 export const BestSellers: React.FC = memo(() => {
-  const { bestSellers, bestSellersLoading, fetchBestSellers } = useProducts();
+  const { bestSellers, bestSellersLoading } = useProducts();
   const { addItem } = useCart();
   const { user, showAuthModal } = useAuth();
-
-  useEffect(() => {
-    fetchBestSellers(1);
-  }, [fetchBestSellers]);
 
   if (bestSellersLoading || bestSellers.length === 0) return null;
 

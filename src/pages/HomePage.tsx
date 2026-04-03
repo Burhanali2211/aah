@@ -8,8 +8,8 @@ import { ProfessionalLoader } from '@/components/Common/ProfessionalLoader';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ShieldCheck, Truck, RotateCcw, Headphones } from 'lucide-react';
 
-const FeaturedProducts = lazy(() => import('@/components/Home/FeaturedProducts'));
-const LatestArrivals = lazy(() => import('@/components/Home/LatestArrivals'));
+import { FeaturedProducts } from '@/components/Home/FeaturedProducts';
+import { LatestArrivals } from '@/components/Home/LatestArrivals';
 
 const SectionLoader = memo(() => (
   <div className="py-6 bg-white w-full">

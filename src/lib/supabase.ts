@@ -8,14 +8,15 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // Single shared client — never call createClient() anywhere else in the app.
-// auth.detectSessionInUrl:false prevents duplicate PKCE token exchanges on
-// navigation. auth.persistSession:true keeps the session alive across tabs.
-// These settings also reduce concurrent lock contention on cold start.
+// auth.persistSession:true keeps the session alive across tabs.
+// detectSessionInUrl is set to false to prevent duplicate PKCE token exchanges 
+// on navigation which can cause 400 errors.
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    detectSessionInUrl: true,
     persistSession: true,
     autoRefreshToken: true,
+    detectSessionInUrl: false, // Prevents race conditions on mount/refresh
+    storageKey: 'sb-aligarh-auth-token',
   },
 });
 

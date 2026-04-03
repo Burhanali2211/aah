@@ -2,6 +2,12 @@
 // Supabase GoTrue auth lock (mount → unmount before lock release → 5s timeout
 // on remount). All other StrictMode checks are caught by TypeScript + ESLint.
 import { Fragment as StrictMode } from 'react';
+import { unregisterServiceWorkers } from './utils/serviceWorker';
+
+// Immediately unregister all service workers and purge corrupted caches 
+// to prevent "stuck in reload" loops caused by broken assets.
+unregisterServiceWorkers();
+
 import { createRoot } from 'react-dom/client';
 import { HelmetProvider } from 'react-helmet-async';
 import App from './App.tsx';

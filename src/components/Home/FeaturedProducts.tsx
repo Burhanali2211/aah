@@ -11,11 +11,7 @@ import { Link } from 'react-router-dom';
  * 2 cards per row on mobile, 4 on desktop
  */
 export const FeaturedProducts: React.FC = memo(() => {
-    const { featuredProducts, featuredLoading, fetchFeaturedProducts } = useProducts();
-
-    useEffect(() => {
-        fetchFeaturedProducts(4);
-    }, [fetchFeaturedProducts]);
+    const { featuredProducts, featuredLoading } = useProducts();
 
     return (
         <section className="py-6 sm:py-8 bg-white w-full">

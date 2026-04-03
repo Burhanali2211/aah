@@ -99,6 +99,38 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   useEffect(() => {
+    // 1. Set a hard timeout for auth initialization (5 seconds)
+    // If it takes longer, the app will continue as guest instead of being stuck
+    const timeoutId = setTimeout(() => {
+      if (loading) {
+        console.warn('Auth initialization timed out after 5s. Proceeding as guest.');
+        setLoading(false);
+      }
+    }, 5000);
+
+    // 2. Ultimate Fallback: If still loading after 15s, clear site data and hard reload
+    // This is the absolute "self-healing" logic for corrupt sessions or stale SWs.
+    const recoveryTimeout = setTimeout(async () => {
+      if (loading) {
+        console.error('CRITICAL: App failed to load after 15s. Performing emergency data purge and reload.');
+        try {
+          if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            for (const r of regs) await r.unregister();
+          }
+          if ('caches' in window) {
+            const keys = await caches.keys();
+            for (const k of keys) await caches.delete(k);
+          }
+          localStorage.clear();
+          sessionStorage.clear();
+          window.location.reload();
+        } catch (e) {
+          window.location.reload();
+        }
+      }
+    }, 15000);
+
     const initializeAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -113,6 +145,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.error('Auth initialization error:', error);
         setUser(null);
       } finally {
+        clearTimeout(timeoutId);
+        clearTimeout(recoveryTimeout);
         setLoading(false);
       }
     };
@@ -130,6 +164,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     });
 
     return () => {
+      clearTimeout(timeoutId);
+      clearTimeout(recoveryTimeout);
       subscription.unsubscribe();
     };
   }, []);

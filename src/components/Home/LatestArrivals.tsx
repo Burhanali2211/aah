@@ -6,14 +6,10 @@ import { LatestArrivalProductCard } from '../Product/LatestArrivalProductCard';
 import { Link } from 'react-router-dom';
 
 export const LatestArrivals: React.FC = memo(() => {
-  const { latestProducts, latestLoading, fetchLatestProducts } = useProducts();
+  const { latestProducts, latestLoading } = useProducts();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
-
-  useEffect(() => {
-    fetchLatestProducts(8);
-  }, [fetchLatestProducts]);
 
   const checkScroll = useCallback(() => {
     const c = scrollRef.current;

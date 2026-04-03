@@ -38,7 +38,16 @@ type ProductAction =
   | { type: 'SET_LOADING'; loading: boolean }
   | { type: 'SET_FEATURED_LOADING'; loading: boolean }
   | { type: 'SET_BEST_SELLERS_LOADING'; loading: boolean }
-  | { type: 'SET_LATEST_LOADING'; loading: boolean };
+  | { type: 'SET_LATEST_LOADING'; loading: boolean }
+  | { type: 'INITIALIZE_START' }
+  | { type: 'INITIALIZE_FINISH'; 
+      products: Product[]; 
+      featured: Product[]; 
+      bestSellers: Product[]; 
+      latest: Product[]; 
+      categories: Category[]; 
+      pagination: ProductState['pagination'] 
+    };
 
 const initialState: ProductState = {
   products: [],
@@ -46,15 +55,37 @@ const initialState: ProductState = {
   bestSellers: [],
   latestProducts: [],
   categories: [],
-  loading: false,
-  featuredLoading: false,
-  bestSellersLoading: false,
-  latestLoading: false,
+  loading: true,
+  featuredLoading: true,
+  bestSellersLoading: true,
+  latestLoading: true,
   pagination: { page: 1, limit: 20, total: 0, pages: 0 },
 };
 
 function productReducer(state: ProductState, action: ProductAction): ProductState {
   switch (action.type) {
+    case 'INITIALIZE_START':
+      return { 
+        ...state, 
+        loading: true, 
+        featuredLoading: true, 
+        bestSellersLoading: true, 
+        latestLoading: true 
+      };
+    case 'INITIALIZE_FINISH':
+      return {
+        ...state,
+        products: action.products,
+        featuredProducts: action.featured,
+        bestSellers: action.bestSellers,
+        latestProducts: action.latest,
+        categories: action.categories,
+        pagination: action.pagination,
+        loading: false,
+        featuredLoading: false,
+        bestSellersLoading: false,
+        latestLoading: false
+      };
     case 'SET_PRODUCTS': return { ...state, products: action.products, pagination: action.pagination, loading: false };
     case 'SET_FEATURED': return { ...state, featuredProducts: action.products, featuredLoading: false };
     case 'SET_BEST_SELLERS': return { ...state, bestSellers: action.products, bestSellersLoading: false };
@@ -70,7 +101,7 @@ function productReducer(state: ProductState, action: ProductAction): ProductStat
 
 export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(productReducer, initialState);
-  const { showError } = useNotification();
+  const { showNotification } = useNotification();
   const initFetched = useRef(false);
 
   const mapDbProduct = (dbProduct: any): Product => {
@@ -122,59 +153,49 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
   });
 
   const fetchCategories = useCallback(async () => {
-    dispatch({ type: 'SET_LOADING', loading: true });
     try {
       const data = await db.getCategories();
       dispatch({ type: 'SET_CATEGORIES', categories: data.map(mapDbCategory) });
     } catch (error) {
-      showError('Failed to load categories');
-      dispatch({ type: 'SET_LOADING', loading: false });
+      showNotification({ type: 'error', title: 'Error', message: 'Failed to load categories' });
     }
-  }, [showError]);
+  }, [showNotification]);
 
   const fetchProducts = useCallback(async (page: number = 1, limit: number = 20, filters?: any) => {
-    dispatch({ type: 'SET_LOADING', loading: true });
     try {
       const response = await db.getProducts({ page, limit, ...filters });
       dispatch({ type: 'SET_PRODUCTS', products: response.data.map(mapDbProduct), pagination: response.pagination });
     } catch (error) {
-      showError('Failed to load products');
-      dispatch({ type: 'SET_LOADING', loading: false });
+      showNotification({ type: 'error', title: 'Error', message: 'Failed to load products' });
     }
-  }, [showError]);
+  }, [showNotification]);
 
   const fetchFeaturedProducts = useCallback(async (limit: number = 8) => {
-    dispatch({ type: 'SET_FEATURED_LOADING', loading: true });
     try {
       const data = await db.getFeaturedProducts(limit);
       dispatch({ type: 'SET_FEATURED', products: data.map(mapDbProduct) });
     } catch (error) {
-      showError('Failed to load featured products');
-      dispatch({ type: 'SET_FEATURED_LOADING', loading: false });
+      showNotification({ type: 'error', title: 'Error', message: 'Failed to load featured products' });
     }
-  }, [showError]);
+  }, [showNotification]);
 
   const fetchBestSellers = useCallback(async (limit: number = 8) => {
-    dispatch({ type: 'SET_BEST_SELLERS_LOADING', loading: true });
     try {
       const response = await db.getProducts({ bestSellers: true, limit });
       dispatch({ type: 'SET_BEST_SELLERS', products: response.data.map(mapDbProduct) });
     } catch (error) {
-      showError('Failed to load best sellers');
-      dispatch({ type: 'SET_BEST_SELLERS_LOADING', loading: false });
+      showNotification({ type: 'error', title: 'Error', message: 'Failed to load best sellers' });
     }
-  }, [showError]);
+  }, [showNotification]);
 
   const fetchLatestProducts = useCallback(async (limit: number = 8) => {
-    dispatch({ type: 'SET_LATEST_LOADING', loading: true });
     try {
       const data = await db.getLatestProducts(limit);
       dispatch({ type: 'SET_LATEST', products: data.map(mapDbProduct) });
     } catch (error) {
-      showError('Failed to load latest products');
-      dispatch({ type: 'SET_LATEST_LOADING', loading: false });
+      showNotification({ type: 'error', title: 'Error', message: 'Failed to load latest products' });
     }
-  }, [showError]);
+  }, [showNotification]);
 
   const addProduct = useCallback(async (product: Partial<Product>) => {
     try {
@@ -193,10 +214,10 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
       await Promise.all([fetchProducts(), fetchFeaturedProducts(), fetchLatestProducts()]);
       return mapDbProduct(data);
     } catch (error) {
-      showError('Failed to create product');
+      showNotification({ type: 'error', title: 'Error', message: 'Failed to create product' });
       throw error;
     }
-  }, [showError, fetchProducts, fetchFeaturedProducts, fetchLatestProducts]);
+  }, [showNotification, fetchProducts, fetchFeaturedProducts, fetchLatestProducts]);
 
   const updateProduct = useCallback(async (product: Partial<Product> & { id: string }) => {
     try {
@@ -215,10 +236,10 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
       await Promise.all([fetchProducts(), fetchFeaturedProducts(), fetchLatestProducts()]);
       return mapDbProduct(data);
     } catch (error) {
-      showError('Failed to update product');
+      showNotification({ type: 'error', title: 'Error', message: 'Failed to update product' });
       throw error;
     }
-  }, [showError, fetchProducts, fetchFeaturedProducts, fetchLatestProducts]);
+  }, [showNotification, fetchProducts, fetchFeaturedProducts, fetchLatestProducts]);
 
   const deleteProduct = useCallback(async (id: string) => {
     try {
@@ -232,25 +253,73 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
       if (error) throw error;
       await Promise.all([fetchProducts(), fetchFeaturedProducts(), fetchLatestProducts()]);
     } catch (error) {
-      showError('Failed to delete product');
+      showNotification({ type: 'error', title: 'Error', message: 'Failed to delete product' });
       throw error;
     }
-  }, [showError, fetchProducts, fetchFeaturedProducts, fetchLatestProducts]);
+  }, [showNotification, fetchProducts, fetchFeaturedProducts, fetchLatestProducts]);
 
   useEffect(() => {
     if (initFetched.current) return;
     initFetched.current = true;
-    (async () => {
-      await fetchCategories();
-      await fetchProducts(1, 20);
-      await Promise.all([
-        fetchFeaturedProducts(8),
-        fetchLatestProducts(8),
-        fetchBestSellers(8)
-      ]);
-    })();
-    return () => { initFetched.current = false; };
-  }, [fetchCategories, fetchProducts, fetchFeaturedProducts, fetchLatestProducts, fetchBestSellers]);
+
+    let isMounted = true;
+    const initializeProducts = async () => {
+      dispatch({ type: 'INITIALIZE_START' });
+
+      // Set a hard timeout for product initialization (10 seconds)
+      const timeoutId = setTimeout(() => {
+        if (isMounted) {
+          console.warn('Initial product loading timed out after 10s. Forcing UI to ready state.');
+          dispatch({ 
+            type: 'INITIALIZE_FINISH',
+            products: state.products,
+            featured: state.featuredProducts,
+            bestSellers: state.bestSellers,
+            latest: state.latestProducts,
+            categories: state.categories,
+            pagination: state.pagination
+          });
+        }
+      }, 10000);
+
+      try {
+        const [catData, prodData, featData, lateData, bestData] = await Promise.all([
+          db.getCategories(),
+          db.getProducts({ page: 1, limit: 20 }),
+          db.getFeaturedProducts(8),
+          db.getLatestProducts(8),
+          db.getProducts({ bestSellers: true, limit: 8 })
+        ]);
+
+        if (isMounted) {
+          clearTimeout(timeoutId);
+          dispatch({
+            type: 'INITIALIZE_FINISH',
+            categories: catData.map(mapDbCategory),
+            products: prodData.data.map(mapDbProduct),
+            featured: featData.map(mapDbProduct),
+            latest: lateData.map(mapDbProduct),
+            bestSellers: bestData.data.map(mapDbProduct),
+            pagination: prodData.pagination
+          });
+        }
+      } catch (err) {
+        console.error('Critical initialization error:', err);
+        if (isMounted) {
+          clearTimeout(timeoutId);
+          dispatch({ 
+            type: 'INITIALIZE_FINISH',
+            products: [], featured: [], latest: [], bestSellers: [], categories: [],
+            pagination: { page: 1, limit: 20, total: 0, pages: 0 }
+          });
+        }
+      }
+    };
+
+    initializeProducts();
+
+    return () => { isMounted = false; };
+  }, []);
 
   const value: ProductContextType = {
     ...state,
@@ -270,13 +339,23 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
     },
     searchProducts: async (query) => {
       dispatch({ type: 'SET_LOADING', loading: true });
-      const response = await db.getProducts({ search: query, limit: 50 });
-      dispatch({ type: 'SET_PRODUCTS', products: response.data.map(mapDbProduct), pagination: response.pagination });
+      try {
+        const response = await db.getProducts({ search: query, limit: 50 });
+        dispatch({ type: 'SET_PRODUCTS', products: response.data.map(mapDbProduct), pagination: response.pagination });
+      } catch (error) {
+        showNotification({ type: 'error', title: 'Search Error', message: 'Failed to search products' });
+        dispatch({ type: 'SET_LOADING', loading: false });
+      }
     },
     filterByCategory: async (categoryId) => {
       dispatch({ type: 'SET_LOADING', loading: true });
-      const response = await db.getProducts({ categoryId, limit: 50 });
-      dispatch({ type: 'SET_PRODUCTS', products: response.data.map(mapDbProduct), pagination: response.pagination });
+      try {
+        const response = await db.getProducts({ categoryId, limit: 50 });
+        dispatch({ type: 'SET_PRODUCTS', products: response.data.map(mapDbProduct), pagination: response.pagination });
+      } catch (error) {
+        showNotification({ type: 'error', title: 'Filter Error', message: 'Failed to filter by category' });
+        dispatch({ type: 'SET_LOADING', loading: false });
+      }
     },
     updateProduct, deleteProduct,
     createCategory: async (data) => {
