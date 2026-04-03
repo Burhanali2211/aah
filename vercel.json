@@ -7,14 +7,14 @@
   "trailingSlash": false,
   "redirects": [
     {
-      "source": "/((?!api/).*)",
+      "source": "/",
       "has": [
         {
           "type": "host",
           "value": "himalayanspicesexports.com"
         }
       ],
-      "destination": "https://www.himalayanspicesexports.com/$1",
+      "destination": "https://www.himalayanspicesexports.com",
       "permanent": true
     }
   ],
@@ -25,12 +25,12 @@
     },
     {
       "source": "/((?!api/).*)",
-      "destination": "/index"
+      "destination": "/index.html"
     }
   ],
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/api/(.*)",
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
@@ -43,6 +43,15 @@
         {
           "key": "Access-Control-Allow-Headers",
           "value": "Content-Type, Authorization, X-Requested-With"
+        }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
         }
       ]
     },
