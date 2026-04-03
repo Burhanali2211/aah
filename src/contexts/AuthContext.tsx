@@ -141,6 +141,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } else {
           setUser(null);
         }
+        
+        // SUCCESS: Clear the recovery flag to prevent future reloads from purging storage
+        sessionStorage.removeItem('sb_recovery_active');
       } catch (error) {
         console.error('Auth initialization error:', error);
         setUser(null);

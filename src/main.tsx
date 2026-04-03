@@ -1,11 +1,33 @@
-// StrictMode removed: it causes React 18 double-mount which orphans the
-// Supabase GoTrue auth lock (mount → unmount before lock release → 5s timeout
-// on remount). All other StrictMode checks are caught by TypeScript + ESLint.
+// Nuclear Storage Wipe & Recovery
+(function() {
+  if (typeof window === 'undefined') return;
+  
+  const RECOVERY_KEY = 'sb_recovery_active';
+  const entries = performance.getEntriesByType("navigation");
+  const isRefresh = entries.length > 0 && (entries[0] as PerformanceNavigationTiming).type === 'reload';
+  
+  if (isRefresh && sessionStorage.getItem(RECOVERY_KEY)) {
+    console.warn('[RECOVERY] Refresh detected during hang. Purging all storage...');
+    localStorage.clear();
+    sessionStorage.clear();
+    if ('caches' in window) caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+    }
+    // Remove individual supabase keys just in case localStorage.clear() is restricted
+    Object.keys(localStorage).forEach(key => {
+      if (key.includes('supabase') || key.includes('sb-')) localStorage.removeItem(key);
+    });
+  }
+  
+  // Set the recovery flag — it will be cleared by AuthContext if initialization succeeds
+  sessionStorage.setItem(RECOVERY_KEY, 'true');
+})();
+
 import { Fragment as StrictMode } from 'react';
 import { unregisterServiceWorkers } from './utils/serviceWorker';
 
-// Immediately unregister all service workers and purge corrupted caches 
-// to prevent "stuck in reload" loops caused by broken assets.
+// Immediately attempt to kill any lingering SWs
 unregisterServiceWorkers();
 
 import { createRoot } from 'react-dom/client';
