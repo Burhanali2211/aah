@@ -18,7 +18,7 @@ const ESSENTIAL_SETTINGS = [
   { key: 'site_name', type: 'text', category: 'general', description: 'Website name', is_public: true, icon: Globe, defaultValue: 'Aligarh Attar House' },
   { key: 'logo_url', type: 'text', category: 'general', description: 'Website logo URL', is_public: true, icon: Upload, defaultValue: '/logo.png' },
   { key: 'site_description', type: 'text', category: 'general', description: 'Website description/meta description', is_public: true, icon: FileText, defaultValue: 'Pure Attars, Oud & Islamic Lifestyle Products from Aligarh' },
-  { key: 'contact_email', type: 'email', category: 'contact', description: 'Contact email address', is_public: true, icon: Mail, defaultValue: 'support@aligarhattar.com' },
+  { key: 'contact_email', type: 'email', category: 'contact', description: 'Contact email address', is_public: true, icon: Mail, defaultValue: 'support@aah-teal.vercel.app' },
   { key: 'contact_phone', type: 'text', category: 'contact', description: 'Contact phone number', is_public: true, icon: Phone, defaultValue: '+91-XXXXXXXXXX' },
   { key: 'currency', type: 'text', category: 'general', description: 'Default currency code (e.g., INR, USD)', is_public: true, icon: DollarSign, defaultValue: 'INR' },
   { key: 'free_shipping_threshold', type: 'number', category: 'shipping', description: 'Free shipping above this amount', is_public: true, icon: Truck, defaultValue: '2000' },

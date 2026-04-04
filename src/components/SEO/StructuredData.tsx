@@ -43,7 +43,7 @@ export const ProductStructuredData: React.FC<{ product: Product }> = ({ product 
     },
     offers: {
       '@type': 'Offer',
-      url: `https://aligarhattar.com/products/${product.id}`,
+      url: `https://aah-teal.vercel.app/products/${product.id}`,
       priceCurrency: 'INR',
       price: product.price,
       availability: `https://schema.org/${product.availability || 'InStock'}`,
@@ -198,7 +198,7 @@ export const ArticleStructuredData: React.FC<{
       name: 'Aligarh Attar House',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://aligarhattar.com/logo.png'
+        url: 'https://aah-teal.vercel.app/logo.png'
       }
     }
   };
@@ -220,9 +220,9 @@ export const LocalBusinessStructuredData: React.FC = () => {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
     name: 'Aligarh Attar House',
-    image: 'https://aligarhattar.com/logo.png',
-    '@id': 'https://aligarhattar.com',
-    url: 'https://aligarhattar.com',
+    image: 'https://aah-teal.vercel.app/logo.png',
+    '@id': 'https://aah-teal.vercel.app',
+    url: 'https://aah-teal.vercel.app',
     telephone: '+91-XXXXXXXXXX',
     priceRange: '₹₹',
     address: {

@@ -35,25 +35,25 @@ const REQUIRED_POLICY_PAGES: Omit<PolicyPage, 'exists' | 'inFooter' | 'footerLin
     id: 'shipping',
     name: 'Shipping Policy',
     route: '/shipping-policy',
-    razorpayUrl: 'https://aligarhattar.com/shipping-policy',
+    razorpayUrl: 'https://aah-teal.vercel.app/shipping-policy',
   },
   {
     id: 'terms',
     name: 'Terms and Conditions',
     route: '/terms-of-service',
-    razorpayUrl: 'https://aligarhattar.com/terms-of-service',
+    razorpayUrl: 'https://aah-teal.vercel.app/terms-of-service',
   },
   {
     id: 'refund',
     name: 'Cancellations and Refunds',
     route: '/refund-policy',
-    razorpayUrl: 'https://aligarhattar.com/refund-policy',
+    razorpayUrl: 'https://aah-teal.vercel.app/refund-policy',
   },
   {
     id: 'privacy',
     name: 'Privacy Policy',
     route: '/privacy-policy',
-    razorpayUrl: 'https://aligarhattar.com/privacy-policy',
+    razorpayUrl: 'https://aah-teal.vercel.app/privacy-policy',
   },
 ];
 

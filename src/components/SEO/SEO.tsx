@@ -24,8 +24,8 @@ interface SEOProps {
 
 const DEFAULT_TITLE = 'Aligarh Attars – Pure Traditional Fragrances & Concentrated Perfume Oils';
 const DEFAULT_DESCRIPTION = 'Shop pure, authentic attars, concentrated perfume oils, and luxury oud at Aligarh Attars. Crafted using traditional methods for long-lasting sillage. Free shipping on orders above ₹499. India & worldwide delivery.';
-const DEFAULT_IMAGE = 'https://aligarhattar.com/og-image.jpg';
-const DEFAULT_URL = 'https://aligarhattar.com';
+const DEFAULT_IMAGE = 'https://aah-teal.vercel.app/og-image.jpg';
+const DEFAULT_URL = 'https://aah-teal.vercel.app';
 const SITE_NAME = 'Aligarh Attars';
 
 export const SEO: React.FC<SEOProps> = ({
@@ -100,7 +100,7 @@ export const ProductSEO: React.FC<{
 }> = ({ productName, description, price, image, category, availability }) => {
   const title = `${productName} - Buy Online`;
   const desc = `${description.substring(0, 150)}... Price: ₹${price}. ${availability === 'InStock' ? 'In Stock' : 'Out of Stock'}. Aligarh Attars – Free shipping on orders above ₹499.`;
-  const keywords = `${productName}, ${category || 'attar'}, aligarh attars, buy ${productName} online, aligarhattar`;
+  const keywords = `${productName}, ${category || 'attar'}, aligarh attars, buy ${productName} online, aah-teal.vercel.app`;
 
   return (
     <SEO
