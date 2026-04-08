@@ -25,27 +25,12 @@
 })();
 
 import { Fragment as StrictMode } from 'react';
-import { unregisterServiceWorkers } from './utils/serviceWorker';
-
-// Immediately attempt to kill any lingering SWs
-unregisterServiceWorkers();
 
 import { createRoot } from 'react-dom/client';
 import { HelmetProvider } from 'react-helmet-async';
 import App from './App.tsx';
 import './index.css';
-
-// Setup complete
-
-// Initialize analytics and error tracking
-import { initGA } from './services/analytics';
-import { initSentry, ErrorBoundary } from './services/errorTracking';
-
-// Initialize Sentry (error tracking)
-initSentry();
-
-// Initialize Google Analytics
-initGA();
+import { ErrorBoundary } from './components/Common/ErrorBoundary';
 
 // Initialize admin dashboard styles from cache immediately (prevents flash of old colors)
 if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) {
@@ -178,16 +163,7 @@ if (typeof window !== 'undefined') {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ErrorBoundary
-      fallback={({ error, resetError }) => (
-        <div style={{ padding: '2rem', textAlign: 'center' }}>
-          <h1>Something went wrong</h1>
-          <p>{error instanceof Error ? error.message : String(error)}</p>
-          <button onClick={resetError}>Try again</button>
-        </div>
-      )}
-      showDialog={false}
-    >
+    <ErrorBoundary>
       <HelmetProvider>
         <App />
       </HelmetProvider>
