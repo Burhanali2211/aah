@@ -36,7 +36,8 @@
       "Bash(rm -rf db)",
       "Bash(rm -f docs/remove-console-logs.ps1)",
       "Bash(rm -rf logs)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(wc -l src/**/*.tsx src/**/*.ts)"
     ],
     "additionalDirectories": [
       "c:\\Users\\cristy''''s\\websites\\ecommerce\\netlify"

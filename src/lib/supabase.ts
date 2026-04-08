@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { queryWithRetry } from './retryFetch';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -55,49 +56,51 @@ export const db = {
     showOnHomepage?: boolean;
     sellerId?: string;
   }) {
-    const page = params?.page || 1;
-    const limit = params?.limit || 20;
-    const offset = (page - 1) * limit;
+    return queryWithRetry(async () => {
+      const page = params?.page || 1;
+      const limit = params?.limit || 20;
+      const offset = (page - 1) * limit;
 
-    // Use count only for paginated list pages, not homepage sections
-    const needsCount = !params?.featured && !params?.bestSellers && !params?.latest && !params?.showOnHomepage;
+      // Use count only for paginated list pages, not homepage sections
+      const needsCount = !params?.featured && !params?.bestSellers && !params?.latest && !params?.showOnHomepage;
 
-    let query = supabase
-      .from('products')
-      .select('*', needsCount ? { count: 'exact' } : undefined);
+      let query = supabase
+        .from('products')
+        .select('*', needsCount ? { count: 'exact' } : undefined);
 
-    if (params?.categoryId) query = query.eq('category_id', params.categoryId);
-    if (params?.featured)    query = query.eq('is_featured', true);
-    if (params?.showOnHomepage) query = query.eq('show_on_homepage', true);
-    if (params?.sellerId)    query = query.eq('seller_id', params.sellerId);
+      if (params?.categoryId) query = query.eq('category_id', params.categoryId);
+      if (params?.featured)    query = query.eq('is_featured', true);
+      if (params?.showOnHomepage) query = query.eq('show_on_homepage', true);
+      if (params?.sellerId)    query = query.eq('seller_id', params.sellerId);
 
-    if (params?.search) {
-      query = query.ilike('name', `%${params.search}%`);
-    }
-
-    // bestSellers: order by rating desc, then review_count desc
-    if (params?.bestSellers) {
-      query = query.order('rating', { ascending: false });
-    } else if (params?.latest) {
-      query = query.order('created_at', { ascending: false });
-    } else {
-      query = query.order('created_at', { ascending: false });
-    }
-
-    const { data, error, count } = await query
-      .range(offset, offset + limit - 1);
-
-    if (error) throw error;
-
-    return {
-      data: data || [],
-      pagination: {
-        page,
-        limit,
-        total: count || 0,
-        pages: Math.ceil((count || 0) / limit)
+      if (params?.search) {
+        query = query.ilike('name', `%${params.search}%`);
       }
-    };
+
+      // bestSellers: order by rating desc, then review_count desc
+      if (params?.bestSellers) {
+        query = query.order('rating', { ascending: false });
+      } else if (params?.latest) {
+        query = query.order('created_at', { ascending: false });
+      } else {
+        query = query.order('created_at', { ascending: false });
+      }
+
+      const { data, error, count } = await query
+        .range(offset, offset + limit - 1);
+
+      if (error) throw error;
+
+      return {
+        data: data || [],
+        pagination: {
+          page,
+          limit,
+          total: count || 0,
+          pages: Math.ceil((count || 0) / limit)
+        }
+      };
+    }, { maxAttempts: 3 });
   },
 
   async getProduct(id: string) {
@@ -105,14 +108,16 @@ export const db = {
     if (!uuidRegex.test(id)) return null;
 
     // Full select for detail page — needs description, specifications etc.
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('id', id)
-      .single();
+    return queryWithRetry(async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', id)
+        .single();
 
-    if (error) throw error;
-    return data;
+      if (error) throw error;
+      return data;
+    }, { maxAttempts: 3 });
   },
 
   async getFeaturedProducts(limit = 8) {
@@ -152,13 +157,15 @@ export const db = {
 
   // Categories
   async getCategories() {
-    const { data, error } = await supabase
-      .from('categories')
-      .select('*')
-      .order('name', { ascending: true });
-    
-    if (error) throw error;
-    return data;
+    return queryWithRetry(async () => {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      return data;
+    }, { maxAttempts: 3 });
   },
 
   async getCategory(id: string) {
@@ -252,13 +259,15 @@ export const db = {
 
   // Cart
   async getCart(userId: string) {
-    const { data, error } = await supabase
-      .from('cart_items')
-      .select('*, products(*)')
-      .eq('user_id', userId);
-    
-    if (error) throw error;
-    return data;
+    return queryWithRetry(async () => {
+      const { data, error } = await supabase
+        .from('cart_items')
+        .select('*, products(*)')
+        .eq('user_id', userId);
+
+      if (error) throw error;
+      return data;
+    }, { maxAttempts: 3 });
   },
 
   async addToCart(userId: string, productId: string, quantity: number) {
@@ -302,14 +311,16 @@ export const db = {
 
   // Orders
   async getOrders(userId: string) {
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-    
-    if (error) throw error;
-    return data;
+    return queryWithRetry(async () => {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data;
+    }, { maxAttempts: 3 });
   },
 
   async getOrder(orderId: string) {
@@ -346,13 +357,15 @@ export const db = {
 
   // Addresses
   async getAddresses(userId: string) {
-    const { data, error } = await supabase
-      .from('addresses')
-      .select('*')
-      .eq('user_id', userId);
-    
-    if (error) throw error;
-    return data;
+    return queryWithRetry(async () => {
+      const { data, error } = await supabase
+        .from('addresses')
+        .select('*')
+        .eq('user_id', userId);
+
+      if (error) throw error;
+      return data;
+    }, { maxAttempts: 3 });
   },
 
   async createAddress(addressData: any) {
