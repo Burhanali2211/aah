@@ -124,7 +124,7 @@ E-commerce frontend for Islamic perfumes/attars + accessories. Deployed on Verce
 - [ ] Tighten error handling (don't suppress ServiceWorker errors)
 
 ### 4. FEATURES
-- [ ] Complete email service integration
+- [ ] Complete email service intecgration
 - [ ] Image optimization automation
 - [ ] Analytics dashboard (currently no metrics collected)
 - [ ] Order export/reporting
