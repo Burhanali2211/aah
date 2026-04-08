@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useAuthGuard } from '../../hooks/useAuthGuard';
 import { ProfessionalLoader } from './ProfessionalLoader';
 
 interface ProtectedRouteProps {
@@ -42,6 +43,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
+
+  // Monitor auth state and redirect if session dies mid-session
+  useAuthGuard(redirectTo);
 
   // Show loading spinner while checking authentication
   // This prevents any content from being rendered before auth check
