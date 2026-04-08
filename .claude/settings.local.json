@@ -28,7 +28,14 @@
       "Bash(PGPASSWORD=\"cf1c9Onbgb3kDZB63Pq6wd70OgqQdkYXbQoVDsRAZXwXMvpEAJKV3kPRRVA3saEp\" psql -h aws-0-us-west-2.pooler.supabase.com -p 5432 -U \"postgres.jhbogubzkfxbpcsxplzv\" -d postgres -c \"SELECT tc.table_name, tc.constraint_name, cc.check_clause FROM information_schema.table_constraints tc JOIN information_schema.check_constraints cc ON tc.constraint_name = cc.constraint_name WHERE tc.table_schema = ''public'' AND tc.constraint_type = ''CHECK'' ORDER BY tc.table_name;\")",
       "Bash(PGPASSWORD=\"cf1c9Onbgb3kDZB63Pq6wd70OgqQdkYXbQoVDsRAZXwXMvpEAJKV3kPRRVA3saEp\" psql -h aws-0-us-west-2.pooler.supabase.com -p 5432 -U \"postgres.jhbogubzkfxbpcsxplzv\" -d postgres -c \"SELECT schemaname, relname as table_name, n_live_tup as row_count FROM pg_stat_user_tables WHERE schemaname = ''public'' ORDER BY relname;\")",
       "Bash(PGPASSWORD=\"cf1c9Onbgb3kDZB63Pq6wd70OgqQdkYXbQoVDsRAZXwXMvpEAJKV3kPRRVA3saEp\" psql -h aws-0-us-west-2.pooler.supabase.com -p 5432 -U \"postgres.jhbogubzkfxbpcsxplzv\" -d postgres -c \"SELECT table_name, column_name, data_type, is_nullable, column_default FROM information_schema.columns WHERE table_schema = ''public'' ORDER BY table_name, ordinal_position;\")",
-      "Bash(PGPASSWORD=\"cf1c9Onbgb3kDZB63Pq6wd70OgqQdkYXbQoVDsRAZXwXMvpEAJKV3kPRRVA3saEp\" psql -h aws-0-us-west-2.pooler.supabase.com -p 5432 -U \"postgres.jhbogubzkfxbpcsxplzv\" -d postgres -c \":*)"
+      "Bash(PGPASSWORD=\"cf1c9Onbgb3kDZB63Pq6wd70OgqQdkYXbQoVDsRAZXwXMvpEAJKV3kPRRVA3saEp\" psql -h aws-0-us-west-2.pooler.supabase.com -p 5432 -U \"postgres.jhbogubzkfxbpcsxplzv\" -d postgres -c \":*)",
+      "Bash(grep -E \"\\\\.md$\")",
+      "Bash(du -sh ./*)",
+      "Bash(grep -v \"^archive$\")",
+      "Bash(ls -la *.json)",
+      "Bash(rm -rf db)",
+      "Bash(rm -f docs/remove-console-logs.ps1)",
+      "Bash(rm -rf logs)"
     ],
     "additionalDirectories": [
       "c:\\Users\\cristy''''s\\websites\\ecommerce\\netlify"
