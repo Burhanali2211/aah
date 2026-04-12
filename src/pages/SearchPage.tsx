@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Search, Filter, X } from 'lucide-react';
 import { ProductCard } from '../components/Product/ProductCard';
 import { ProductDetails } from '../components/Product/ProductDetails';
+import { SearchResultsSkeleton } from '../components/Common/SkeletonScreens';
 import { useProducts } from '../contexts/ProductContext';
 import { Product } from '../types';
 
@@ -11,7 +12,7 @@ export const SearchPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
-  const { products } = useProducts();
+  const { products, loading } = useProducts();
 
   useEffect(() => {
     const query = searchParams.get('q') || '';
@@ -108,7 +109,9 @@ export const SearchPage: React.FC = () => {
         </div>
 
         {/* Results Grid */}
-        {filteredProducts.length === 0 ? (
+        {loading ? (
+          <SearchResultsSkeleton />
+        ) : filteredProducts.length === 0 ? (
           <div className="text-center py-16">
             <div className="max-w-md mx-auto">
               <div className="text-gray-400 text-6xl mb-6">🔍</div>

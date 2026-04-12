@@ -4,18 +4,18 @@ import { CategoryChips } from '@/components/Home/CategoryChips';
 import { FlashSale } from '@/components/Home/FlashSale';
 import { BestSellers } from '@/components/Home/BestSellers';
 import { useProducts } from '@/contexts/ProductContext';
-import { ProfessionalLoader } from '@/components/Common/ProfessionalLoader';
+import { FeaturedProductsSectionSkeleton, BestSellersSectionSkeleton, LatestArrivalsSectionSkeleton } from '@/components/Common/SkeletonScreens';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ShieldCheck, Truck, RotateCcw, Headphones } from 'lucide-react';
 
 import { FeaturedProducts } from '@/components/Home/FeaturedProducts';
 import { LatestArrivals } from '@/components/Home/LatestArrivals';
 
-const SectionLoader = memo(() => (
-  <div className="py-6 bg-white w-full">
-    <div className="w-full px-4 sm:px-6 lg:px-8"><ProfessionalLoader fullPage={false} /></div>
-  </div>
-));
+const SectionLoader = memo(({ type = 'featured' }: { type?: 'featured' | 'bestsellers' | 'latest' }) => {
+  if (type === 'featured') return <div className="py-6 bg-white w-full"><div className="w-full px-4 sm:px-6 lg:px-8"><FeaturedProductsSectionSkeleton /></div></div>;
+  if (type === 'bestsellers') return <div className="py-6 bg-white w-full"><div className="w-full px-4 sm:px-6 lg:px-8"><BestSellersSectionSkeleton /></div></div>;
+  return <div className="py-6 bg-white w-full"><div className="w-full px-4 sm:px-6 lg:px-8"><LatestArrivalsSectionSkeleton /></div></div>;
+});
 SectionLoader.displayName = 'SectionLoader';
 
 /* ─── Deal Tiles: Bento layout ─── */
@@ -210,7 +210,7 @@ export default function HomePage() {
 
       {/* 5. Featured Products — 2×2 mobile / 4-col desktop */}
       <div className="mt-1.5">
-        <Suspense fallback={<SectionLoader />}>
+        <Suspense fallback={<SectionLoader type="featured" />}>
           <FeaturedProducts />
         </Suspense>
       </div>
@@ -223,7 +223,7 @@ export default function HomePage() {
 
       {/* 8. New Arrivals — horizontal scroll */}
       <div className="mt-1.5">
-        <Suspense fallback={<SectionLoader />}>
+        <Suspense fallback={<SectionLoader type="latest" />}>
           <LatestArrivals />
         </Suspense>
       </div>

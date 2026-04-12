@@ -1,9 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "*"
-    ],
-    "defaultMode": "bypassPermissions"
+      "Read(//c/Users/cristy/'s/websites/**)",
+      "Read(//c/Users/cristy/'s/websites/aligarh-attars/**)",
+      "Bash(echo \".env not readable directly - checking example\" ls -la /c/Users/cristy\\\\'s/websites/aligarh-attars/.env*)",
+      "Bash(git:*)",
+      "Skill(update-config)",
+      "Read(//tmp/**)"
+    ]
   }
 }
-

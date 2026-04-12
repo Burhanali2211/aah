@@ -1,10 +1,11 @@
 import React from 'react';
 import { useProducts } from '../contexts/ProductContext';
 import { ProductCard } from '../components/Product/ProductCard';
+import { ProductListSkeleton } from '../components/Common/SkeletonScreens';
 import { Clock } from 'lucide-react';
 
 export const NewArrivalsPage: React.FC = () => {
-  const { products } = useProducts();
+  const { products, loading } = useProducts();
 
   const newArrivals = [...products]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -29,15 +30,19 @@ export const NewArrivalsPage: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {newArrivals.map((product, index) => (
-            <div key={product.id}>
-              <ProductCard 
-                product={product} 
-              />
-            </div>
-          ))}
-        </div>
+        {loading ? (
+          <ProductListSkeleton count={20} columns={4} />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {newArrivals.map((product, index) => (
+              <div key={product.id}>
+                <ProductCard
+                  product={product}
+                />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

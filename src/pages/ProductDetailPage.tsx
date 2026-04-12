@@ -15,7 +15,7 @@ import { ProductReview } from '../components/Product/ProductReview';
 import { ReviewForm } from '../components/Product/ReviewForm';
 import { ProductRecommendations } from '../components/Product/ProductRecommendations';
 import { Modal } from '../components/Common/Modal';
-import { ProfessionalLoader } from '@/components/Common/ProfessionalLoader';
+import { ProductDetailSkeleton } from '../components/Common/SkeletonScreens';
 import { Review, Product } from '../types';
 import { useCartButtonState } from '../hooks/useCartButtonState';
 import { LuxuryGallery } from '../components/Product/LuxuryGallery';
@@ -85,7 +85,7 @@ export const ProductDetailPage: React.FC = () => {
     })();
   }, [product, fetchReviewsForProduct]);
 
-  if (loading) return <ProfessionalLoader fullPage={true} text="Loading product details..." />;
+  if (loading) return <div className="min-h-screen bg-stone-50 p-4 md:p-8"><ProductDetailSkeleton /></div>;
 
   if (!product) {
     return (

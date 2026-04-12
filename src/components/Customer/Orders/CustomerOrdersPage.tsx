@@ -4,6 +4,7 @@ import {
   Package, Truck, CheckCircle, Clock, XCircle,
   Search, ShoppingBag, Loader2, AlertCircle, RefreshCw
 } from 'lucide-react';
+import { OrderHistorySkeleton } from '../../../components/Common/SkeletonScreens';
 import { CustomerDashboardLayout } from '../Layout/CustomerDashboardLayout';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -119,20 +120,7 @@ export const CustomerOrdersPage: React.FC = () => {
   if (loading) {
     return (
       <CustomerDashboardLayout title="My Orders" subtitle="Track and manage your orders">
-        <div className="space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 animate-pulse">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gray-200 rounded-xl" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-36" />
-                  <div className="h-3 bg-gray-200 rounded w-24" />
-                </div>
-                <div className="h-6 bg-gray-200 rounded w-20" />
-              </div>
-            </div>
-          ))}
-        </div>
+        <OrderHistorySkeleton />
       </CustomerDashboardLayout>
     );
   }
