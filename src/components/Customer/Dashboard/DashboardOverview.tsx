@@ -56,37 +56,23 @@ export const DashboardOverview: React.FC = () => {
   const fetchDashboardData = async () => {
     if (!user) return;
     try {
-      // Fetch orders, addresses count, wishlist count in parallel
-      const [ordersRes, addrRes, wishRes] = await Promise.all([
-        supabase.from('orders').select('*, order_items(count)').eq('user_id', user.id).order('created_at', { ascending: false }),
-        supabase.from('addresses').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('wishlist_items').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-      ]);
-
-      const orders = ordersRes.data || [];
-      const totalSpent = orders.reduce((sum: number, o: any) => sum + (o.total_amount || 0), 0);
-      const pendingOrders = orders.filter((o: any) => ['pending', 'processing', 'shipped'].includes(o.status)).length;
-      const deliveredOrders = orders.filter((o: any) => o.status === 'delivered').length;
-
-      setStats({
-        totalOrders: orders.length,
-        pendingOrders,
-        deliveredOrders,
-        totalSpent,
-        wishlistCount: wishRes.count || 0,
-        addressCount: addrRes.count || 0
+      // Fetch all dashboard stats in one optimized RPC call
+      const { data, error } = await supabase.rpc('get_user_dashboard_stats', {
+        p_user_id: user.id
       });
 
-      // Recent orders (last 3)
-      setRecentOrders(orders.slice(0, 3).map((order: any) => ({
-        id: order.id,
-        orderNumber: order.order_number || order.id.slice(0, 8).toUpperCase(),
-        status: order.status,
-        total: order.total_amount || 0,
-        createdAt: order.created_at,
-        itemCount: order.order_items?.[0]?.count || 0
-      })));
-
+      if (error) throw error;
+      if (data) {
+        setStats({
+          totalOrders: data.totalOrders,
+          pendingOrders: data.pendingOrders,
+          deliveredOrders: data.deliveredOrders,
+          totalSpent: data.totalSpent,
+          wishlistCount: data.wishlistCount,
+          addressCount: data.addressCount
+        });
+        setRecentOrders(data.recentOrders);
+      }
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
     } finally {

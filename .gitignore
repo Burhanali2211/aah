@@ -29,6 +29,13 @@ logs/**/*.log
 *.ntvs*
 *.njsproj
 *.sln
+*.claude
+.env
+.env.production
+.env.local
+.env.example
+.agents
+.mcp.json
 
 # OS
 .DS_Store

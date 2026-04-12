@@ -98,7 +98,7 @@ export const ImprovedCheckoutPage: React.FC = () => {
       const shippingAddress = {
         fullName: `${formData.firstName} ${formData.lastName}`,
         streetAddress: formData.address, city: formData.city, state: formData.state,
-        postalCode: formData.zipCode, country: formData.country, phone: formData.phone
+        postalCode: formData.zipCode, country: formData.country, email: formData.email, phone: formData.phone
       };
       if (!user) {
         showNotification({ type: 'error', title: 'Authentication Required', message: 'Please log in to place an order' });
@@ -129,7 +129,7 @@ export const ImprovedCheckoutPage: React.FC = () => {
         const shippingAddress = {
           fullName: `${formData.firstName} ${formData.lastName}`,
           streetAddress: formData.address, city: formData.city, state: formData.state,
-          postalCode: formData.zipCode, country: formData.country, phone: formData.phone
+          postalCode: formData.zipCode, country: formData.country, email: formData.email, phone: formData.phone
         };
         if (!user) {
           showNotification({ type: 'error', title: 'Authentication Required', message: 'Please log in to place an order' });

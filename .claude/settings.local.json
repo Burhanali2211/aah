@@ -1,6 +1,14 @@
 {
   "permissions": {
     "allow": [
+       "*",
+      "Bash(*)",
+      "Edit(*)",
+      "Read(*)",
+      "Write(*)",
+      "Glob(*)",
+      "Grep(*)",
+      "Agent(*)",
       "Read(//c/Users/cristy/'s/websites/**)",
       "Read(//c/Users/cristy/'s/websites/aligarh-attars/**)",
       "Bash(echo \".env not readable directly - checking example\" ls -la /c/Users/cristy\\\\'s/websites/aligarh-attars/.env*)",

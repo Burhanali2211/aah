@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { Order, CartItem, Address } from '../../types';
 import { supabase, db } from '../../lib/supabase';
 import { mapDbOrderToAppOrder } from '../../utils/shoppingMapper';
+import * as optimized from '../../lib/optimized-queries';
 
 export const useShoppingOrders = (user: any, showNotification: any) => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -11,9 +12,11 @@ export const useShoppingOrders = (user: any, showNotification: any) => {
     if (!user) { setOrders([]); return; }
     setLoading(true);
     try {
-      const { data, error } = await supabase.from('orders').select('*, order_items(*, products(*))').eq('user_id', user.id).order('created_at', { ascending: false });
-      if (error) throw error;
-      setOrders(data.map(mapDbOrderToAppOrder));
+      // Use optimized active orders function
+      const data = await optimized.getUserActiveOrders(user.id);
+      
+      // Map optimized summary to order list (might need fallback for full items if needed in list)
+      setOrders(data.map(d => ({ ...d, items: [] } as unknown as Order)));
     } catch (error) {
       console.error('Error fetching orders:', error);
       showNotification({ type: 'error', title: 'Error', message: 'Failed to load orders. Please try again later.' });

@@ -212,6 +212,7 @@ export interface Address {
   state: string;
   postalCode: string; // Maps to postal_code in DB
   country: string;
+  email?: string;
   phone?: string;
   isDefault?: boolean; // Maps to is_default in DB
   createdAt?: Date; // Maps to created_at in DB

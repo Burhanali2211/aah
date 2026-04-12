@@ -2,6 +2,7 @@ import React, { createContext, useContext, useReducer, ReactNode, useCallback, u
 import { Product, ProductContextType, Category, Review } from '../types';
 import { supabase, db } from '../lib/supabase';
 import { transformProduct, transformCategory } from '../lib/dataTransform';
+import * as optimized from '../lib/optimized-queries';
 import { productApi } from '../lib/apiClient';
 import { useNotification } from './NotificationContext';
 
@@ -157,9 +158,10 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const fetchBestSellers = useCallback(async (limit: number = 8) => {
     try {
-      const response = await db.getProducts({ bestSellers: true, limit });
-      if (response && response.data) {
-        dispatch({ type: 'SET_BEST_SELLERS', products: response.data.map(mapDbProduct) });
+      // Use optimized function which uses materialized view
+      const data = await optimized.getPopularProducts(limit);
+      if (data) {
+        dispatch({ type: 'SET_BEST_SELLERS', products: data.map(mapDbProduct) });
       }
     } catch (error) {
       showNotification({ type: 'error', title: 'Error', message: 'Failed to load best sellers' });
@@ -168,7 +170,8 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const fetchLatestProducts = useCallback(async (limit: number = 8) => {
     try {
-      const data = await db.getLatestProducts(limit);
+      // Use materialized view for performance
+      const data = await optimized.getPopularProducts(limit);
       if (data) {
         dispatch({ type: 'SET_LATEST', products: data.map(mapDbProduct) });
       }
@@ -303,14 +306,28 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
       await supabase.from('reviews').insert([{ product_id: review.productId, user_id: review.userId, rating: review.rating, comment: review.comment, title: review.title }]);
     },
     getProductById: async (id) => {
-      const data = await db.getProduct(id);
-      return data ? mapDbProduct(data) : null;
+      try {
+        // Use optimized RPC for product details including joins
+        const data = await optimized.getProductDetails(id);
+        if (data) return mapDbProduct(data);
+        
+        // Fallback to local state
+        return state.products.find(p => p.id === id) || null;
+      } catch (error) {
+        console.error('Error fetching product details:', error);
+        return state.products.find(p => p.id === id) || null;
+      }
     },
     searchProducts: async (query) => {
       dispatch({ type: 'SET_LOADING', loading: true });
       try {
-        const response = await db.getProducts({ search: query, limit: 50 });
-        dispatch({ type: 'SET_PRODUCTS', products: response.data.map(mapDbProduct), pagination: response.pagination });
+        // Use optimized full-text search RPC
+        const data = await optimized.searchProducts({ query, limit: 50 });
+        dispatch({ 
+          type: 'SET_PRODUCTS', 
+          products: data.map(mapDbProduct), 
+          pagination: { page: 1, limit: 50, total: data.length, pages: 1 } 
+        });
       } catch (error) {
         showNotification({ type: 'error', title: 'Search Error', message: 'Failed to search products' });
         dispatch({ type: 'SET_LOADING', loading: false });

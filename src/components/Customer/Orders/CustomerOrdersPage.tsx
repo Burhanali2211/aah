@@ -15,6 +15,17 @@ interface OrderItem {
   product_image: string;
 }
 
+interface ShippingAddress {
+  fullName: string;
+  streetAddress: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  email?: string;
+  phone?: string;
+}
+
 interface Order {
   id: string;
   order_number: string;
@@ -23,6 +34,7 @@ interface Order {
   payment_method: string;
   total_amount: number;
   created_at: string;
+  shipping_address?: ShippingAddress;
   items: OrderItem[];
 }
 
@@ -67,7 +79,7 @@ export const CustomerOrdersPage: React.FC = () => {
 
       const { data: ordersData, error: ordErr } = await supabase
         .from('orders')
-        .select('id, order_number, status, payment_status, payment_method, total_amount, created_at')
+        .select('id, order_number, status, payment_status, payment_method, total_amount, created_at, shipping_address')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -90,6 +102,7 @@ export const CustomerOrdersPage: React.FC = () => {
             payment_method: o.payment_method,
             total_amount: Number(o.total_amount),
             created_at: o.created_at,
+            shipping_address: o.shipping_address,
             items: (itemsData || []).map((i: any) => ({
               id: i.id,
               product_name: i.products?.name || 'Product',
@@ -266,6 +279,16 @@ export const CustomerOrdersPage: React.FC = () => {
                           {' · '}
                           {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
                         </p>
+                        {order.shipping_address && (
+                          <div className="text-xs text-gray-500 mt-1 space-y-0.5">
+                            {order.shipping_address.email && (
+                              <p>📧 {order.shipping_address.email}</p>
+                            )}
+                            {order.shipping_address.phone && (
+                              <p>📱 {order.shipping_address.phone}</p>
+                            )}
+                          </div>
+                        )}
                         {order.items.length > 0 && (
                           <p className="text-xs text-gray-400 mt-0.5 truncate">
                             {order.items.map(i => i.product_name).join(', ')}
