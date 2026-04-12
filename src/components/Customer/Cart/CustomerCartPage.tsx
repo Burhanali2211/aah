@@ -80,7 +80,7 @@ export const CustomerCartPage: React.FC = () => {
         <div className="space-y-4">
           {items.map((item) => (
             <div
-              key={`${item.product.id}-${JSON.stringify(item.selectedOptions)}`}
+              key={`${item.product.id}-${item.variantId}`}
               className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex flex-col sm:flex-row gap-4"
             >
               {/* Product Image */}
@@ -100,7 +100,7 @@ export const CustomerCartPage: React.FC = () => {
                       {item.product.name}
                     </h4>
                     <button
-                      onClick={() => removeItem(item.product.id, item.selectedOptions)}
+                      onClick={() => removeItem(item.product.id, item.variantId)}
                       className="p-2 text-gray-400 hover:text-red-500 transition-colors"
                     >
                       <Trash2 className="w-5 h-5" />
@@ -121,7 +121,7 @@ export const CustomerCartPage: React.FC = () => {
                 <div className="flex items-center justify-between mt-4">
                   <div className="flex items-center gap-4 bg-gray-50 rounded-xl p-1">
                     <button
-                      onClick={() => updateQuantity(item.product.id, Math.max(1, item.quantity - 1), item.selectedOptions)}
+                      onClick={() => updateQuantity(item.product.id, Math.max(1, item.quantity - 1), item.variantId)}
                       className="p-1.5 hover:bg-white hover:shadow-sm rounded-lg text-gray-600 transition-all"
                     >
                       <Minus className="w-4 h-4" />
@@ -130,7 +130,7 @@ export const CustomerCartPage: React.FC = () => {
                       {item.quantity}
                     </span>
                     <button
-                      onClick={() => updateQuantity(item.product.id, item.quantity + 1, item.selectedOptions)}
+                      onClick={() => updateQuantity(item.product.id, item.quantity + 1, item.variantId)}
                       className="p-1.5 hover:bg-white hover:shadow-sm rounded-lg text-gray-600 transition-all"
                     >
                       <Plus className="w-4 h-4" />

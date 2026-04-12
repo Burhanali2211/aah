@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useReducer, ReactNode, useCallback, useEffect, useRef } from 'react';
 import { Product, ProductContextType, Category, Review } from '../types';
 import { supabase, db } from '../lib/supabase';
+import { transformProduct, transformCategory } from '../lib/dataTransform';
+import { productApi } from '../lib/apiClient';
 import { useNotification } from './NotificationContext';
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
@@ -104,39 +106,7 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
   const { showNotification } = useNotification();
   const initFetched = useRef(false);
 
-  const mapDbProduct = (dbProduct: any): Product => {
-    const images = Array.isArray(dbProduct.images) ? dbProduct.images : (dbProduct.image_url ? [dbProduct.image_url] : []);
-    return {
-      id: dbProduct.id,
-      name: dbProduct.name,
-      slug: dbProduct.slug,
-      description: dbProduct.description || '',
-      shortDescription: dbProduct.short_description,
-      price: dbProduct.price,
-      originalPrice: dbProduct.original_price,
-      categoryId: dbProduct.category_id,
-      images,
-      stock: dbProduct.stock ?? 0,
-      minStockLevel: dbProduct.min_stock_level,
-      sku: dbProduct.sku,
-      weight: dbProduct.weight,
-      dimensions: dbProduct.dimensions,
-      rating: dbProduct.rating || 0,
-      reviewCount: dbProduct.review_count || 0,
-      reviews: [],
-      sellerId: dbProduct.seller_id,
-      sellerName: dbProduct.seller_name || 'Aligarh Attar House',
-      tags: dbProduct.tags || [],
-      specifications: dbProduct.specifications || {},
-      featured: dbProduct.is_featured || false,
-      showOnHomepage: dbProduct.show_on_homepage || false,
-      isActive: dbProduct.is_active,
-      metaTitle: dbProduct.meta_title,
-      metaDescription: dbProduct.meta_description,
-      createdAt: dbProduct.created_at ? new Date(dbProduct.created_at) : new Date(0),
-      updatedAt: dbProduct.updated_at ? new Date(dbProduct.updated_at) : undefined,
-    };
-  };
+  const mapDbProduct = (dbProduct: any): Product => transformProduct(dbProduct);
 
   const mapDbCategory = (dbCategory: any): Category => ({
     id: dbCategory.id,
@@ -155,7 +125,9 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
   const fetchCategories = useCallback(async () => {
     try {
       const data = await db.getCategories();
-      dispatch({ type: 'SET_CATEGORIES', categories: data.map(mapDbCategory) });
+      if (data) {
+        dispatch({ type: 'SET_CATEGORIES', categories: data.map(mapDbCategory) });
+      }
     } catch (error) {
       showNotification({ type: 'error', title: 'Error', message: 'Failed to load categories' });
     }
@@ -164,7 +136,9 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
   const fetchProducts = useCallback(async (page: number = 1, limit: number = 20, filters?: any) => {
     try {
       const response = await db.getProducts({ page, limit, ...filters });
-      dispatch({ type: 'SET_PRODUCTS', products: response.data.map(mapDbProduct), pagination: response.pagination });
+      if (response && response.data) {
+        dispatch({ type: 'SET_PRODUCTS', products: response.data.map(mapDbProduct), pagination: response.pagination });
+      }
     } catch (error) {
       showNotification({ type: 'error', title: 'Error', message: 'Failed to load products' });
     }
@@ -173,7 +147,9 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
   const fetchFeaturedProducts = useCallback(async (limit: number = 8) => {
     try {
       const data = await db.getFeaturedProducts(limit);
-      dispatch({ type: 'SET_FEATURED', products: data.map(mapDbProduct) });
+      if (data) {
+        dispatch({ type: 'SET_FEATURED', products: data.map(mapDbProduct) });
+      }
     } catch (error) {
       showNotification({ type: 'error', title: 'Error', message: 'Failed to load featured products' });
     }
@@ -182,7 +158,9 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
   const fetchBestSellers = useCallback(async (limit: number = 8) => {
     try {
       const response = await db.getProducts({ bestSellers: true, limit });
-      dispatch({ type: 'SET_BEST_SELLERS', products: response.data.map(mapDbProduct) });
+      if (response && response.data) {
+        dispatch({ type: 'SET_BEST_SELLERS', products: response.data.map(mapDbProduct) });
+      }
     } catch (error) {
       showNotification({ type: 'error', title: 'Error', message: 'Failed to load best sellers' });
     }
@@ -191,7 +169,9 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
   const fetchLatestProducts = useCallback(async (limit: number = 8) => {
     try {
       const data = await db.getLatestProducts(limit);
-      dispatch({ type: 'SET_LATEST', products: data.map(mapDbProduct) });
+      if (data) {
+        dispatch({ type: 'SET_LATEST', products: data.map(mapDbProduct) });
+      }
     } catch (error) {
       showNotification({ type: 'error', title: 'Error', message: 'Failed to load latest products' });
     }
@@ -199,7 +179,7 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const addProduct = useCallback(async (product: Partial<Product>) => {
     try {
-      const { data, error } = await supabase.from('products').insert([{
+      const data = await productApi.create({
         name: product.name, slug: product.slug, description: product.description,
         short_description: product.shortDescription, price: product.price,
         original_price: product.originalPrice, category_id: product.categoryId,
@@ -209,8 +189,7 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
         is_featured: product.featured, show_on_homepage: product.showOnHomepage ?? true,
         is_active: product.isActive ?? true, meta_title: product.metaTitle,
         meta_description: product.metaDescription, seller_id: product.sellerId
-      }]).select().single();
-      if (error) throw error;
+      });
       await Promise.all([fetchProducts(), fetchFeaturedProducts(), fetchLatestProducts()]);
       return mapDbProduct(data);
     } catch (error) {
@@ -221,7 +200,8 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const updateProduct = useCallback(async (product: Partial<Product> & { id: string }) => {
     try {
-      const { data, error } = await supabase.from('products').update({
+      const data = await productApi.update({
+        id: product.id,
         name: product.name, slug: product.slug, description: product.description,
         short_description: product.shortDescription, price: product.price,
         original_price: product.originalPrice, category_id: product.categoryId,
@@ -231,8 +211,7 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
         is_featured: product.featured, show_on_homepage: product.showOnHomepage,
         is_active: product.isActive, meta_title: product.metaTitle,
         meta_description: product.metaDescription
-      }).eq('id', product.id).select().single();
-      if (error) throw error;
+      });
       await Promise.all([fetchProducts(), fetchFeaturedProducts(), fetchLatestProducts()]);
       return mapDbProduct(data);
     } catch (error) {
@@ -243,14 +222,7 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const deleteProduct = useCallback(async (id: string) => {
     try {
-      await Promise.allSettled([
-        supabase.from('cart_items').delete().eq('product_id', id),
-        supabase.from('wishlist_items').delete().eq('product_id', id),
-        supabase.from('order_items').delete().eq('product_id', id),
-        supabase.from('reviews').delete().eq('product_id', id),
-      ]);
-      const { error } = await supabase.from('products').delete().eq('id', id);
-      if (error) throw error;
+      await productApi.delete(id);
       await Promise.all([fetchProducts(), fetchFeaturedProducts(), fetchLatestProducts()]);
     } catch (error) {
       showNotification({ type: 'error', title: 'Error', message: 'Failed to delete product' });
@@ -295,12 +267,12 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
         clearTimeout(timeoutId);
         dispatch({
           type: 'INITIALIZE_FINISH',
-          categories: catData.map(mapDbCategory),
-          products: prodData.data.map(mapDbProduct),
-          featured: featData.map(mapDbProduct),
-          latest: lateData.map(mapDbProduct),
-          bestSellers: bestData.data.map(mapDbProduct),
-          pagination: prodData.pagination
+          categories: (catData || []).map(mapDbCategory),
+          products: (prodData?.data || []).map(mapDbProduct),
+          featured: (featData || []).map(mapDbProduct),
+          latest: (lateData || []).map(mapDbProduct),
+          bestSellers: (bestData?.data || []).map(mapDbProduct),
+          pagination: prodData?.pagination || { page: 1, limit: 20, total: 0, pages: 0 }
         });
       } catch (err) {
         console.error('[PRODUCTS] Critical initialization error:', err);

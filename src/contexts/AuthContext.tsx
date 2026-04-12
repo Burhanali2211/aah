@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import { createPortal } from 'react-dom';
 import { User, AuthContextType, Product } from '../types';
 import { supabase } from '../lib/supabase';
+import { SecurityManager } from '../utils/auth/security';
 import AuthModal from '../components/Auth/AuthModal';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -169,11 +170,44 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const signIn = async (email: string, password: string): Promise<void> => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    if (data.user) {
-      const profile = await fetchProfile(data.user.id);
-      setUser(mapSupabaseUserToAppUser(data.user, profile));
+    const secMgr = SecurityManager.getInstance();
+
+    // Check if account is locked due to too many failed attempts
+    if (secMgr.isAccountLocked(email)) {
+      const msRemaining = secMgr.getLockoutTimeRemaining(email);
+      const minsRemaining = Math.ceil(msRemaining / 60000);
+      throw new Error(
+        `Account temporarily locked due to too many failed attempts. ` +
+        `Please try again in ${minsRemaining} minute${minsRemaining !== 1 ? 's' : ''}.`
+      );
+    }
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        // Record failed attempt
+        secMgr.recordLoginAttempt(email, false);
+        const attempts = secMgr.getLoginAttempts(email);
+        const remaining = 5 - attempts;
+
+        if (remaining > 0) {
+          const errorMsg = `${error.message} (${remaining} attempt${remaining !== 1 ? 's' : ''} remaining before account lockout)`;
+          throw new Error(errorMsg);
+        } else {
+          throw new Error('Too many failed attempts. Account locked for 15 minutes.');
+        }
+      }
+
+      // Record successful attempt (clears lockout)
+      secMgr.recordLoginAttempt(email, true);
+
+      if (data.user) {
+        const profile = await fetchProfile(data.user.id);
+        setUser(mapSupabaseUserToAppUser(data.user, profile));
+      }
+    } catch (error) {
+      throw error;
     }
   };
 

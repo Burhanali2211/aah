@@ -7,7 +7,7 @@ import {
   initializeDashboardStyles 
 } from '@/utils/adminDashboardStyles';
 
-interface DashboardSettings {
+export interface DashboardSettings {
   dashboard_name: string;
   dashboard_logo_url: string;
   background_gradient_from: string;

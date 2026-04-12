@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { Product, WishlistItem, WishlistContextType } from '../types';
 import { supabase } from '../lib/supabase';
+import { transformProduct } from '../lib/dataTransform';
 import { useAuth } from './AuthContext';
 import { useNotification } from './NotificationContext';
 
@@ -37,22 +38,7 @@ export const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }
       
       const wishlistItems = (data || []).map((item: any) => ({
         id: item.id,
-        product: {
-          id: item.products.id,
-          name: item.products.name,
-          slug: item.products.slug,
-          description: item.products.description,
-          shortDescription: item.products.short_description,
-          price: Number(item.products.price),
-          originalPrice: item.products.original_price ? Number(item.products.original_price) : undefined,
-          images: item.products.images || [],
-          stock: Number(item.products.stock),
-          rating: Number(item.products.rating || 0),
-          reviewCount: Number(item.products.review_count || 0),
-          featured: item.products.is_featured,
-          categoryId: item.products.category_id,
-          createdAt: new Date(item.products.created_at)
-        },
+        product: transformProduct(item.products),
         productId: item.product_id,
         createdAt: new Date(item.created_at)
       }));

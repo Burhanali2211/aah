@@ -148,17 +148,17 @@ export const ProductsList: React.FC = () => {
       if (error) throw error;
 
       const rows = productsData || [];
-      const categoryIds = [...new Set(rows.map((p: any) => p.category_id).filter(Boolean))];
+      const categoryIds = [...new Set(rows.map((p: { category_id?: string }) => p.category_id).filter((id): id is string => !!id))];
       const categoryMap: Record<string, string> = {};
       if (categoryIds.length > 0) {
         const { data: cats } = await supabase.from('categories').select('id, name').in('id', categoryIds);
-        (cats || []).forEach((c: any) => { categoryMap[c.id] = c.name; });
+        (cats || []).forEach((c: { id: string; name: string }) => { categoryMap[c.id] = c.name; });
       }
 
-      const mappedProducts = rows.map((p: any) => ({
+      const mappedProducts = rows.map((p) => ({
         id: p.id,
         name: p.name,
-        price: String(p.price),
+        price: String(p.price || '0'),
         original_price: p.original_price != null ? String(p.original_price) : '',
         stock: p.stock ?? 0,
         category_name: categoryMap[p.category_id] || '—',
@@ -171,8 +171,9 @@ export const ProductsList: React.FC = () => {
       setProducts(mappedProducts);
       setTotalItems(ti);
       setTotalPages(tp);
-    } catch (error: any) {
-      showError('Error', error.message || 'Failed to load products');
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Failed to load products';
+      showError('Error', msg);
     } finally {
       setLoading(false);
     }
@@ -188,7 +189,7 @@ export const ProductsList: React.FC = () => {
       setSelectedProduct(null);
       fetchProducts();
       fetchProductStats();
-    } catch (error: any) {
+    } catch {
       // Error is already handled/reported by ProductContext
     } finally {
       setDeleteLoading(false);

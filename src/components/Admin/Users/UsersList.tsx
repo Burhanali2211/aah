@@ -1,33 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Plus, Search, Edit, Trash2, Power, Users as UsersIcon, Filter, X, Loader2, ChevronLeft, ChevronRight, Shield, ShoppingBag } from 'lucide-react';
+import { Plus, Search, Users as UsersIcon, Filter, X, Loader2, ChevronLeft, ChevronRight, Shield, ShoppingBag } from 'lucide-react';
 import { ConfirmModal } from '../../Common/Modal';
 import { supabase } from '../../../lib/supabase';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { UserForm } from './UserForm';
-
-interface User {
-  id: string;
-  email: string;
-  full_name: string;
-  role: string;
-  is_active: boolean;
-  email_verified: boolean;
-  created_at: string;
-  order_count: number;
-  total_spent: string;
-}
-
-const getRoleBadge = (role: string) => {
-  const map: Record<string, string> = {
-    admin: 'bg-purple-100 text-purple-700 border border-purple-200',
-    seller: 'bg-blue-100 text-blue-700 border border-blue-200',
-    customer: 'bg-emerald-100 text-emerald-700 border border-emerald-200',
-  };
-  return map[role] || 'bg-gray-100 text-gray-600 border border-gray-200';
-};
-
-const formatDate = (d: string) =>
-  new Date(d).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+import { User } from './List/types';
+import { UserMobileList } from './List/UserMobileList';
+import { UserDesktopTable } from './List/UserDesktopTable';
 
 // Module-level cache – survives SPA navigation, cleared on hard refresh
 let _usersCache: { users: User[]; totalItems: number; totalPages: number } | null = null;
@@ -189,7 +168,7 @@ export const UsersList: React.FC = () => {
         </button>
       </div>
 
-      {/* Stat Cards — compact 4-col always */}
+      {/* Stat Cards */}
       <div className="grid grid-cols-4 gap-2 sm:gap-4">
         {statCards.map((s) => (
           <div key={s.label} className={`${s.bg} border ${s.border} rounded-xl p-3 sm:p-4`}>
@@ -254,126 +233,23 @@ export const UsersList: React.FC = () => {
         </div>
       ) : (
         <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-          {/* Mobile Cards */}
-          <div className="md:hidden divide-y divide-gray-100">
-            {users.map((user) => (
-              <div key={user.id} className="p-4">
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
-                      <span className="text-sm font-semibold text-slate-600">
-                        {(user.full_name || user.email).charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-semibold text-sm text-gray-900 truncate">{user.full_name || '—'}</p>
-                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <button onClick={() => handleToggleStatus(user)}
-                      className={`p-2 rounded-lg transition-colors ${user.is_active ? 'text-orange-600 hover:bg-orange-50' : 'text-emerald-600 hover:bg-emerald-50'}`}
-                      title={user.is_active ? 'Deactivate' : 'Activate'}>
-                      <Power className="h-4 w-4" />
-                    </button>
-                    <button onClick={() => { setSelectedUser(user); setShowFormModal(true); }}
-                      className="p-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors">
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    <button onClick={() => { setSelectedUser(user); setShowDeleteModal(true); }}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`px-2 py-0.5 text-xs font-medium rounded-lg ${getRoleBadge(user.role)}`}>
-                    {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                  </span>
-                  <span className={`px-2 py-0.5 text-xs font-medium rounded-lg border ${user.is_active ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-red-100 text-red-700 border-red-200'}`}>
-                    {user.is_active ? 'Active' : 'Inactive'}
-                  </span>
-                  <span className="text-xs text-gray-400 ml-auto">{formatDate(user.created_at)}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Desktop Table */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wide px-5 py-3">User</th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wide px-5 py-3">Role</th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wide px-5 py-3">Orders</th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wide px-5 py-3">Spent</th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wide px-5 py-3">Status</th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wide px-5 py-3">Joined</th>
-                  <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wide px-5 py-3">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {users.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
-                          <span className="text-xs font-semibold text-slate-600">
-                            {(user.full_name || user.email).charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-medium text-sm text-gray-900 truncate">{user.full_name || '—'}</p>
-                          <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4">
-                      <span className={`px-2.5 py-1 text-xs font-medium rounded-lg ${getRoleBadge(user.role)}`}>
-                        {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 text-sm text-gray-700">{user.order_count || 0}</td>
-                    <td className="px-5 py-4">
-                      <span className="text-sm font-semibold text-gray-900">
-                        ₹{Number(user.total_spent || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4">
-                      <span className={`px-2.5 py-1 text-xs font-medium rounded-lg border ${user.is_active ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-red-100 text-red-700 border-red-200'}`}>
-                        {user.is_active ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 text-sm text-gray-500">{formatDate(user.created_at)}</td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-1 justify-end">
-                        <button onClick={() => handleToggleStatus(user)}
-                          className={`p-2 rounded-lg transition-colors ${user.is_active ? 'text-orange-600 hover:bg-orange-50' : 'text-emerald-600 hover:bg-emerald-50'}`}
-                          title={user.is_active ? 'Deactivate' : 'Activate'}>
-                          <Power className="h-4 w-4" />
-                        </button>
-                        <button onClick={() => { setSelectedUser(user); setShowFormModal(true); }}
-                          className="p-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors" title="Edit">
-                          <Edit className="h-4 w-4" />
-                        </button>
-                        <button onClick={() => { setSelectedUser(user); setShowDeleteModal(true); }}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
+          <UserMobileList 
+            users={users} 
+            onToggleStatus={handleToggleStatus} 
+            onEdit={(u) => { setSelectedUser(u); setShowFormModal(true); }} 
+            onDelete={(u) => { setSelectedUser(u); setShowDeleteModal(true); }} 
+          />
+          <UserDesktopTable 
+            users={users} 
+            onToggleStatus={handleToggleStatus} 
+            onEdit={(u) => { setSelectedUser(u); setShowFormModal(true); }} 
+            onDelete={(u) => { setSelectedUser(u); setShowDeleteModal(true); }} 
+          />
           <Pagination />
         </div>
       )}
 
-      {/* User Form Modal */}
+      {/* Forms & Modals */}
       {showFormModal && (
         <UserForm
           user={selectedUser}
@@ -382,13 +258,12 @@ export const UsersList: React.FC = () => {
         />
       )}
 
-      {/* Delete Confirmation Modal */}
       <ConfirmModal
         isOpen={showDeleteModal}
         onClose={() => { setShowDeleteModal(false); setSelectedUser(null); }}
         onConfirm={handleDelete}
         title="Deactivate User"
-        message={`Are you sure you want to deactivate "${selectedUser?.full_name}"?`}
+        message={`Are you sure you want to deactivate \"${selectedUser?.full_name}\"?`}
         confirmText="Deactivate"
         variant="danger"
         loading={deleteLoading}

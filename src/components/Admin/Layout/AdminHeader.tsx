@@ -5,10 +5,9 @@ import { useAuth } from '../../../contexts/AuthContext';
 
 interface AdminHeaderProps {
   onMenuClick: () => void;
-  sidebarOpen: boolean;
 }
 
-export const AdminHeader: React.FC<AdminHeaderProps> = ({ onMenuClick, sidebarOpen }) => {
+export const AdminHeader: React.FC<AdminHeaderProps> = ({ onMenuClick }) => {
   const { user, logout } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);

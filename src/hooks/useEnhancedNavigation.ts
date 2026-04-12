@@ -9,6 +9,5 @@ export {
   useEnhancedNavigation,
   useNavigationAnalytics,
   useNavigationPerformance,
-  NavigationItem
+  type NavigationItem
 } from './useNavigation';
-

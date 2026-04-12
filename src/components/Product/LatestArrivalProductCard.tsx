@@ -35,7 +35,7 @@ export const LatestArrivalProductCard: React.FC<LatestArrivalProductCardProps> =
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             alt={product.name}
             size="small"
-            priority={index < 3 ? 'critical' : 'normal'}
+            priority={index < 3 ? 'high' : 'auto'}
           />
 
           {/* Wishlist */}

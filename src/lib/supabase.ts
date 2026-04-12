@@ -1,8 +1,23 @@
 import { createClient } from '@supabase/supabase-js';
-import { queryWithRetry } from './retryFetch';
+import { queryWithRetry, fetchWithRetry } from './retryFetch';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Public-safe product fields (excludes internal/pricing fields like seller_id, min_stock_level, cost_price, etc.)
+const PRODUCT_PUBLIC_FIELDS = [
+  'id', 'name', 'slug', 'description', 'short_description',
+  'price', 'original_price', 'category_id',
+  'images', 'stock', 'sku', 'weight', 'dimensions',
+  'tags', 'specifications', 'rating', 'review_count',
+  'is_featured', 'show_on_homepage', 'is_active',
+  'meta_title', 'meta_description',
+  'scent_notes', 'longevity', 'sillage', 'fragrance_family',
+  'gender_profile', 'occasion', 'season', 'perfumer_story',
+  'origin', 'grade', 'packaging_options', 'shelf_life',
+  'certifications', 'usage_tips', 'culinary_uses', 'health_benefits',
+  'created_at', 'updated_at'
+].join(', ');
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
@@ -56,7 +71,7 @@ export const db = {
     showOnHomepage?: boolean;
     sellerId?: string;
   }) {
-    return queryWithRetry(async () => {
+    return fetchWithRetry(async () => {
       const page = params?.page || 1;
       const limit = params?.limit || 20;
       const offset = (page - 1) * limit;
@@ -66,7 +81,7 @@ export const db = {
 
       let query = supabase
         .from('products')
-        .select('*', needsCount ? { count: 'exact' } : undefined);
+        .select(PRODUCT_PUBLIC_FIELDS, needsCount ? { count: 'exact' } : undefined);
 
       if (params?.categoryId) query = query.eq('category_id', params.categoryId);
       if (params?.featured)    query = query.eq('is_featured', true);
@@ -108,22 +123,17 @@ export const db = {
     if (!uuidRegex.test(id)) return null;
 
     // Full select for detail page — needs description, specifications etc.
-    return queryWithRetry(async () => {
-      const { data, error } = await supabase
+    return queryWithRetry(async () => await supabase
         .from('products')
         .select('*')
         .eq('id', id)
-        .single();
-
-      if (error) throw error;
-      return data;
-    }, { maxAttempts: 3 });
+        .single(), { maxAttempts: 3 });
   },
 
   async getFeaturedProducts(limit = 8) {
     const { data, error } = await supabase
       .from('products')
-      .select('*')
+      .select(PRODUCT_PUBLIC_FIELDS)
       .eq('is_featured', true)
       .order('created_at', { ascending: false })
       .limit(limit);
@@ -135,7 +145,7 @@ export const db = {
   async getLatestProducts(limit = 8) {
     const { data, error } = await supabase
       .from('products')
-      .select('*')
+      .select(PRODUCT_PUBLIC_FIELDS)
       .order('created_at', { ascending: false })
       .limit(limit);
 
@@ -146,26 +156,21 @@ export const db = {
   async getHomepageProducts(limit = 4) {
     const { data, error } = await supabase
       .from('products')
-      .select('*')
+      .select(PRODUCT_PUBLIC_FIELDS)
       .eq('show_on_homepage', true)
       .order('created_at', { ascending: false })
       .limit(limit);
-    
+
     if (error) throw error;
     return data;
   },
 
   // Categories
   async getCategories() {
-    return queryWithRetry(async () => {
-      const { data, error } = await supabase
+    return queryWithRetry(async () => await supabase
         .from('categories')
         .select('*')
-        .order('name', { ascending: true });
-
-      if (error) throw error;
-      return data;
-    }, { maxAttempts: 3 });
+        .order('name', { ascending: true }), { maxAttempts: 3 });
   },
 
   async getCategory(id: string) {
@@ -259,15 +264,10 @@ export const db = {
 
   // Cart
   async getCart(userId: string) {
-    return queryWithRetry(async () => {
-      const { data, error } = await supabase
+    return queryWithRetry(async () => await supabase
         .from('cart_items')
-        .select('*, products(*)')
-        .eq('user_id', userId);
-
-      if (error) throw error;
-      return data;
-    }, { maxAttempts: 3 });
+        .select(`*, products(${PRODUCT_PUBLIC_FIELDS})`)
+        .eq('user_id', userId), { maxAttempts: 3 });
   },
 
   async addToCart(userId: string, productId: string, quantity: number) {
@@ -311,16 +311,11 @@ export const db = {
 
   // Orders
   async getOrders(userId: string) {
-    return queryWithRetry(async () => {
-      const { data, error } = await supabase
+    return queryWithRetry(async () => await supabase
         .from('orders')
         .select('*')
         .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data;
-    }, { maxAttempts: 3 });
+        .order('created_at', { ascending: false }), { maxAttempts: 3 });
   },
 
   async getOrder(orderId: string) {
@@ -357,15 +352,10 @@ export const db = {
 
   // Addresses
   async getAddresses(userId: string) {
-    return queryWithRetry(async () => {
-      const { data, error } = await supabase
+    return queryWithRetry(async () => await supabase
         .from('addresses')
         .select('*')
-        .eq('user_id', userId);
-
-      if (error) throw error;
-      return data;
-    }, { maxAttempts: 3 });
+        .eq('user_id', userId), { maxAttempts: 3 });
   },
 
   async createAddress(addressData: any) {

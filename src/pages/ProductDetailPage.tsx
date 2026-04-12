@@ -40,9 +40,21 @@ export const ProductDetailPage: React.FC = () => {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
   const dummyProduct: Product = {
-    id: '', name: '', price: 0, stock: 0, images: [], rating: 0,
-    description: '', reviews: [], sellerId: '', sellerName: '',
-    tags: [], featured: false, showOnHomepage: true, createdAt: new Date()
+    id: '', 
+    name: '', 
+    price: 0, 
+    stock: 0, 
+    images: [], 
+    rating: 0,
+    description: '', 
+    reviews: [], 
+    sellerId: '', 
+    sellerName: '',
+    categoryId: '',
+    tags: [], 
+    featured: false, 
+    showOnHomepage: true, 
+    createdAt: new Date()
   };
 
   const cartButtonState = useCartButtonState(product || dummyProduct);

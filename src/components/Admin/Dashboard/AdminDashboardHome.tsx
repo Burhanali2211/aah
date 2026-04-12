@@ -260,7 +260,7 @@ export const AdminDashboardHome: React.FC = () => {
               className="inline-flex items-center gap-2 bg-white/15 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-white/25 transition-colors">
               <ShoppingCart className="w-4 h-4" /> View Orders
             </Link>
-            <button onClick={fetchDashboardData}
+            <button onClick={() => fetchDashboardData()}
               className="inline-flex items-center gap-2 bg-white/15 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-white/25 transition-colors">
               <RefreshCw className="w-4 h-4" /> Refresh
             </button>

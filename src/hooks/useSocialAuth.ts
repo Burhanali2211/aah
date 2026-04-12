@@ -65,7 +65,7 @@ export const useSocialAuth = () => {
     try {
       const { error } = await supabase.auth.unlinkIdentity({
         provider,
-      });
+      } as any);
 
       if (error) {
         throw error;

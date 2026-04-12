@@ -111,7 +111,7 @@ export const ResponsiveTable = <T extends Record<string, unknown> = Record<strin
             ) : (
               data.map((record, index) => (
                 <tr
-                  key={record.id || index}
+                  key={(record.id as string) || index}
                   onClick={() => onRowClick?.(record)}
                   className={`hover:bg-gray-50 ${onRowClick ? 'cursor-pointer' : ''}`}
                 >
@@ -130,7 +130,7 @@ export const ResponsiveTable = <T extends Record<string, unknown> = Record<strin
                     >
                       {column.render
                         ? column.render(record[column.key], record)
-                        : record[column.key]}
+                        : (record[column.key] as React.ReactNode)}
                     </td>
                   ))}
                 </tr>
@@ -157,7 +157,7 @@ export const ResponsiveTable = <T extends Record<string, unknown> = Record<strin
           <div className="divide-y divide-gray-200">
             {data.map((record, index) => (
               <div
-                key={record.id || index}
+                key={(record.id as string) || index}
                 onClick={() => onRowClick?.(record)}
                 className={`p-4 ${onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''}`}
               >
@@ -168,7 +168,7 @@ export const ResponsiveTable = <T extends Record<string, unknown> = Record<strin
                       <dd className="text-sm text-gray-900 break-words max-w-[60%]">
                         {column.render
                           ? column.render(record[column.key], record)
-                          : record[column.key]}
+                          : (record[column.key] as React.ReactNode)}
                       </dd>
                     </div>
                   ))}

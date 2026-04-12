@@ -1,10 +1,10 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef, memo } from 'react';
 import { useSearchParams, useParams, Link, useNavigate } from 'react-router-dom';
 import {
-    Search, Grid3X3, LayoutList, Star, Heart, ShoppingCart, 
-    ChevronDown, ChevronUp, X, SlidersHorizontal, Home, 
-    Sparkles, TrendingUp, Percent, Package, ArrowUpDown, 
-    Eye, Check, Flame, Clock, Filter, RotateCcw, 
+    Search, Grid3X3, LayoutList, Star, Heart, ShoppingCart,
+    ChevronDown, ChevronUp, X, SlidersHorizontal, Home,
+    Sparkles, TrendingUp, Percent, Package, ArrowUpDown,
+    Eye, Check, Flame, Clock, Filter, RotateCcw,
     ChevronLeft, ChevronRight, Zap, Droplet, Wind, Sun, Info, ArrowRight
 } from 'lucide-react';
 import { useProducts } from '../contexts/ProductContext';
@@ -12,6 +12,7 @@ import { useWishlist } from '../contexts/ShoppingContext';
 import { useCart } from '../contexts/ShoppingContext';
 import { Product } from '../types';
 import { ProductCard } from '../components/Product/ProductCard';
+import { ProductListSkeleton } from '../components/Common/SkeletonScreens';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface FilterState {
@@ -375,9 +376,7 @@ const ProductsPage: React.FC = () => {
                     </div>
 
                     {loading ? (
-                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                            {[1,2,3,4,5,6].map(i => <div key={i} className="aspect-[3/4] bg-white border border-gray-100 rounded-xl animate-pulse" />)}
-                        </div>
+                        <ProductListSkeleton count={12} columns={3} />
                     ) : sortedProducts.length === 0 ? (
                         <div className="py-32 text-center bg-white rounded-2xl border border-gray-200">
                             <Wind className="h-12 w-12 text-gray-200 mx-auto mb-4" />
@@ -453,7 +452,7 @@ const ProductsPage: React.FC = () => {
                                     return (
                                         <div key={id} className="relative flex-shrink-0 group">
                                             <div className="w-12 h-12 rounded-lg overflow-hidden bg-white/10 border border-white/20">
-                                                <img src={p?.imageUrl} alt="" className="w-full h-full object-cover" />
+                                                <img src={p?.images[0]} alt="" className="w-full h-full object-cover" />
                                             </div>
                                             <button 
                                                 onClick={() => toggleCompare(id)}

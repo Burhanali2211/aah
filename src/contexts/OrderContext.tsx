@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
 import { Order, CartItem, Address, OrderContextType, OrderItem } from '../types';
 import { supabase, db } from '../lib/supabase';
+import { transformProduct } from '../lib/dataTransform';
+import { orderApi } from '../lib/apiClient';
 import { useAuth } from './AuthContext';
 import { useNotification } from './NotificationContext';
 
@@ -32,12 +34,7 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       totalPrice: item.total_price,
       productSnapshot: item.product_snapshot,
       createdAt: new Date(item.created_at),
-      product: item.products ? {
-        id: item.products.id,
-        name: item.products.name,
-        price: item.products.price,
-        images: item.products.images || [],
-      } : undefined
+      product: item.products ? transformProduct(item.products) : undefined
     })),
     total: dbOrder.total_amount,
     subtotal: dbOrder.subtotal,
@@ -109,36 +106,22 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
     setLoading(true);
     try {
-      const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-      
       // Calculate subtotal, tax, etc.
       const subtotal = items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
       const shippingAmount = total > 1000 ? 0 : 50; // Simple logic
       const taxAmount = subtotal * 0.18; // 18% GST example
 
-      // 1. Create order record
-      const orderData = {
-        user_id: user.id,
-        order_number: orderNumber,
+      // 1. Create order record via Edge Function (server generates order number)
+      const order = await orderApi.createOrder({
         total_amount: total,
         subtotal,
         tax_amount: taxAmount,
         shipping_amount: shippingAmount,
-        status: 'pending',
-        payment_status: 'pending',
         payment_method: paymentMethod,
         razorpay_order_id: razorpay_order_id,
         shipping_address: shippingAddress,
         billing_address: shippingAddress,
-      };
-
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert([orderData])
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
+      });
 
       // 2. Create order items
       const orderItems = items.map(item => ({
@@ -164,7 +147,7 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       showNotification({
         type: 'success',
         title: 'Order Placed!',
-        message: `Order ${orderNumber} created successfully.`
+        message: `Order ${order.order_number} created successfully.`
       });
 
       return order.id;
@@ -181,14 +164,9 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
-  const updateOrderStatus = async (orderId: string, status: string): Promise<boolean> => {
+  const updateOrderStatus = async (orderId: string, status: string, trackingNumber?: string): Promise<boolean> => {
     try {
-      const { error } = await supabase
-        .from('orders')
-        .update({ status, updated_at: new Date().toISOString() })
-        .eq('id', orderId);
-
-      if (error) throw error;
+      await orderApi.updateStatus(orderId, status, trackingNumber);
       await fetchUserOrders();
       return true;
     } catch (error) {

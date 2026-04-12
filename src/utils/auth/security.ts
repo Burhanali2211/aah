@@ -237,7 +237,7 @@ export class SecurityManager {
   }
 }
 
-export class RateLimiter {
+export class ActionRateLimiter {
   private attempts: Map<string, { count: number; resetTime: number }> = new Map();
 
   isAllowed(key: string, maxAttempts: number = 5, windowMs: number = 15 * 60 * 1000): boolean {

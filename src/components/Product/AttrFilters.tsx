@@ -1,20 +1,24 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Filter, 
   X, 
-  ChevronDown, 
-  ChevronUp, 
   DollarSign,
   Package,
   MapPin,
   Clock,
   Sparkles,
   Flower2,
-  Crown,
   Droplets
 } from 'lucide-react';
 import { Category } from '../../types';
+import { FilterSection, QuickFilterButton } from './FilterComponents';
+import { 
+  longevityOptions, 
+  sillageOptions, 
+  concentrationOptions, 
+  originOptions, 
+  fragranceFamilyOptions 
+} from './FilterOptions';
 
 export interface AttrFilterState {
   category: string;
@@ -27,7 +31,6 @@ export interface AttrFilterState {
   fragranceFamily: string[];
   sortBy: string;
   search: string;
-  // Keep for compatibility but not used in UI
   rating: number;
   inStock: boolean;
 }
@@ -36,55 +39,12 @@ interface AttrFiltersProps {
   filters: AttrFilterState;
   onFiltersChange: (filters: AttrFilterState) => void;
   categories: Category[];
-  availableBrands: string[]; // Keep for compatibility but not used
+  availableBrands: string[];
   isOpen: boolean;
   onToggle: () => void;
   productCount: number;
   className?: string;
 }
-
-// Attar-specific filter options
-const longevityOptions = [
-  { value: 'light', label: 'Light (2-4 hours)', icon: '🌸' },
-  { value: 'moderate', label: 'Moderate (4-8 hours)', icon: '🌺' },
-  { value: 'long', label: 'Long-lasting (8-12 hours)', icon: '🌹' },
-  { value: 'very-long', label: 'Very Long (12+ hours)', icon: '👑' }
-];
-
-const sillageOptions = [
-  { value: 'intimate', label: 'Intimate (Close to skin)', icon: '🤏' },
-  { value: 'moderate', label: 'Moderate (Arm\'s length)', icon: '🫴' },
-  { value: 'strong', label: 'Strong (Room filling)', icon: '💨' },
-  { value: 'very-strong', label: 'Very Strong (Projection)', icon: '✨' }
-];
-
-const concentrationOptions = [
-  { value: 'pure-oil', label: 'Pure Oil', premium: true },
-  { value: 'concentrated', label: 'Concentrated', premium: true },
-  { value: 'diluted', label: 'Diluted' },
-  { value: 'blend', label: 'Blend' }
-];
-
-const originOptions = [
-  { value: 'kannauj', label: 'Kannauj, India', flag: '🇮🇳' },
-  { value: 'mysore', label: 'Mysore, Karnataka', flag: '🇮🇳' },
-  { value: 'kashmir', label: 'Kashmir, India', flag: '🇮🇳' },
-  { value: 'assam', label: 'Assam, India', flag: '🇮🇳' },
-  { value: 'bulgarian', label: 'Bulgaria (Rose Oil)', flag: '🇧🇬' },
-  { value: 'cambodian', label: 'Cambodia (Oudh)', flag: '🇰🇭' },
-  { value: 'arabian', label: 'Arabian Peninsula', flag: '🇸🇦' }
-];
-
-const fragranceFamilyOptions = [
-  { value: 'floral', label: 'Floral', icon: '🌸' },
-  { value: 'woody', label: 'Woody', icon: '🌳' },
-  { value: 'oriental', label: 'Oriental', icon: '🏺' },
-  { value: 'spicy', label: 'Spicy', icon: '🌶️' },
-  { value: 'fresh', label: 'Fresh', icon: '💧' },
-  { value: 'musky', label: 'Musky', icon: '🦌' },
-  { value: 'citrus', label: 'Citrus', icon: '🍊' },
-  { value: 'herbal', label: 'Herbal', icon: '🌿' }
-];
 
 export const AttrFilters: React.FC<AttrFiltersProps> = ({
   filters,
@@ -105,15 +65,12 @@ export const AttrFilters: React.FC<AttrFiltersProps> = ({
     fragranceFamily: false
   });
 
-  const updateFilter = (key: keyof AttrFilterState, value: any) => {
+  const updateFilter = <K extends keyof AttrFilterState>(key: K, value: AttrFilterState[K]) => {
     onFiltersChange({ ...filters, [key]: value });
   };
 
   const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
+    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
   const clearAllFilters = () => {
@@ -143,75 +100,9 @@ export const AttrFilters: React.FC<AttrFiltersProps> = ({
     filters.fragranceFamily.length
   ].reduce((sum, count) => sum + count, 0);
 
-  const FilterSection: React.FC<{
-    title: string;
-    icon: React.ReactNode;
-    sectionKey: keyof typeof expandedSections;
-    children: React.ReactNode;
-    premium?: boolean;
-  }> = ({ title, icon, sectionKey, children, premium = false }) => (
-    <div className="border-b border-neutral-100 last:border-b-0">
-      <button
-        onClick={() => toggleSection(sectionKey)}
-        className="w-full flex items-center justify-between py-4 text-left hover:bg-neutral-25 rounded-lg transition-colors px-2"
-      >
-        <div className="flex items-center space-x-3">
-          <div className={`${premium ? 'text-amber-500' : 'text-neutral-600'}`}>{icon}</div>
-          <span className={`font-medium text-sm ${premium ? 'text-amber-900' : 'text-neutral-900'}`}>
-            {title}
-            {premium && <Crown className="inline h-3 w-3 ml-1 text-amber-500" />}
-          </span>
-        </div>
-        {expandedSections[sectionKey] ? (
-          <ChevronUp className="h-4 w-4 text-neutral-500" />
-        ) : (
-          <ChevronDown className="h-4 w-4 text-neutral-500" />
-        )}
-      </button>
-      
-      <AnimatePresence>
-        {expandedSections[sectionKey] && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="overflow-hidden"
-          >
-            <div className="pb-4 px-2">
-              {children}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-
-  const QuickFilterButton: React.FC<{
-    label: string;
-    isActive: boolean;
-    onClick: () => void;
-    icon?: React.ReactNode;
-    premium?: boolean;
-  }> = ({ label, isActive, onClick, icon, premium = false }) => (
-    <button
-      onClick={onClick}
-      className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
-        isActive
-          ? premium
-            ? 'bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 border border-amber-300 shadow-sm'
-            : 'bg-gradient-to-r from-neutral-100 to-neutral-200 text-neutral-700 border border-neutral-300 shadow-sm'
-          : 'bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300'
-      }`}
-    >
-      {icon && <span className="text-xs">{icon}</span>}
-      <span>{label}</span>
-    </button>
-  );
-
   return (
     <div className={`bg-white rounded-xl shadow-luxury border border-neutral-200 flex flex-col h-full ${className}`}>
-      {/* Luxury Filter Header */}
+      {/* Header */}
       <div className="flex items-center justify-between p-6 border-b border-neutral-100 flex-shrink-0">
         <div className="flex items-center space-x-3">
           <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-neutral-100 to-neutral-200 rounded-lg">
@@ -229,23 +120,16 @@ export const AttrFilters: React.FC<AttrFiltersProps> = ({
         </div>
         <div className="flex items-center space-x-3">
           {activeFilterCount > 0 && (
-            <button
-              onClick={clearAllFilters}
-              className="text-xs text-neutral-600 hover:text-neutral-900 transition-colors font-medium"
-            >
+            <button onClick={clearAllFilters} className="text-xs text-neutral-600 hover:text-neutral-900 transition-colors font-medium">
               Clear all
             </button>
           )}
-          <button
-            onClick={onToggle}
-            className="lg:hidden p-2 hover:bg-neutral-100 rounded-lg transition-colors"
-          >
+          <button onClick={onToggle} className="lg:hidden p-2 hover:bg-neutral-100 rounded-lg transition-colors">
             <X className="h-4 w-4" />
           </button>
         </div>
       </div>
 
-      {/* Elegant Results Count */}
       <div className="px-6 py-4 bg-gradient-to-r from-neutral-25 to-white border-b border-neutral-100 flex-shrink-0">
         <div className="flex items-center justify-between">
           <p className="text-sm text-neutral-600">
@@ -255,7 +139,6 @@ export const AttrFilters: React.FC<AttrFiltersProps> = ({
         </div>
       </div>
 
-      {/* Quick Filters Section */}
       <div className="p-6 border-b border-neutral-100 flex-shrink-0">
         <h4 className="text-sm font-medium text-neutral-900 mb-3 flex items-center">
           <Droplets className="h-4 w-4 mr-2 text-neutral-600" />
@@ -266,22 +149,21 @@ export const AttrFilters: React.FC<AttrFiltersProps> = ({
             label="Pure Oil"
             isActive={filters.concentration.includes('pure-oil')}
             onClick={() => {
-              const newConcentration = filters.concentration.includes('pure-oil')
+              const newC = filters.concentration.includes('pure-oil')
                 ? filters.concentration.filter(c => c !== 'pure-oil')
                 : [...filters.concentration, 'pure-oil'];
-              updateFilter('concentration', newConcentration);
+              updateFilter('concentration', newC);
             }}
-            icon="💎"
-            premium
+            icon="💎" premium
           />
           <QuickFilterButton
             label="Long-lasting"
             isActive={filters.longevity.includes('very-long')}
             onClick={() => {
-              const newLongevity = filters.longevity.includes('very-long')
+              const newL = filters.longevity.includes('very-long')
                 ? filters.longevity.filter(l => l !== 'very-long')
                 : [...filters.longevity, 'very-long'];
-              updateFilter('longevity', newLongevity);
+              updateFilter('longevity', newL);
             }}
             icon="⏰"
           />
@@ -289,101 +171,56 @@ export const AttrFilters: React.FC<AttrFiltersProps> = ({
             label="Strong Sillage"
             isActive={filters.sillage.includes('very-strong')}
             onClick={() => {
-              const newSillage = filters.sillage.includes('very-strong')
+              const newS = filters.sillage.includes('very-strong')
                 ? filters.sillage.filter(s => s !== 'very-strong')
                 : [...filters.sillage, 'very-strong'];
-              updateFilter('sillage', newSillage);
+              updateFilter('sillage', newS);
             }}
             icon="💨"
           />
           <QuickFilterButton
             label="Premium"
             isActive={filters.priceRange[0] >= 10000}
-            onClick={() => {
-              updateFilter('priceRange', filters.priceRange[0] >= 10000 ? [0, 25000] : [10000, 25000]);
-            }}
-            icon="👑"
-            premium
+            onClick={() => updateFilter('priceRange', filters.priceRange[0] >= 10000 ? [0, 25000] : [10000, 25000])}
+            icon="👑" premium
           />
         </div>
       </div>
 
-      {/* Filter Sections - Improved Scroll Container */}
       <div className="flex-1 overflow-y-auto px-6 py-4">
         <div className="space-y-0">
-          {/* Category Filter */}
-          <FilterSection
-            title="Attar Categories"
-            icon={<Package className="h-5 w-5" />}
-            sectionKey="category"
-          >
+          <FilterSection title="Attar Categories" icon={<Package className="h-5 w-5" />} isExpanded={expandedSections.category} onToggle={() => toggleSection('category')}>
             <div className="space-y-3 max-h-40 overflow-y-auto pr-2">
               <label className="flex items-center space-x-3 cursor-pointer group">
-                <input
-                  type="radio"
-                  name="category"
-                  checked={!filters.category || filters.category === ''}
-                  onChange={() => updateFilter('category', '')}
-                  className="form-radio text-neutral-600 focus:ring-neutral-500 h-4 w-4"
-                />
-                <span className="text-neutral-700 group-hover:text-neutral-900 transition-colors text-sm font-medium">
-                  All Categories
-                </span>
+                <input type="radio" name="category" checked={!filters.category || filters.category === ''} onChange={() => updateFilter('category', '')} className="form-radio text-neutral-600 h-4 w-4" />
+                <span className="text-neutral-700 group-hover:text-neutral-900 transition-colors text-sm font-medium">All Categories</span>
               </label>
               {categories.map((category) => (
                 <label key={category.id} className="flex items-center space-x-3 cursor-pointer group">
-                  <input
-                    type="radio"
-                    name="category"
-                    checked={filters.category === category.name}
-                    onChange={() => updateFilter('category', category.name)}
-                    className="form-radio text-neutral-600 focus:ring-neutral-500 h-4 w-4"
-                  />
-                  <span className="text-neutral-700 group-hover:text-neutral-900 transition-colors text-sm">
-                    {category.name}
-                  </span>
-                  <span className="text-xs text-neutral-400 ml-auto bg-neutral-100 px-2 py-1 rounded-full">
-                    {category.productCount}
-                  </span>
+                  <input type="radio" name="category" checked={filters.category === category.name} onChange={() => updateFilter('category', category.name)} className="form-radio text-neutral-600 h-4 w-4" />
+                  <span className="text-neutral-700 group-hover:text-neutral-900 transition-colors text-sm">{category.name}</span>
+                  <span className="text-xs text-neutral-400 ml-auto bg-neutral-100 px-2 py-1 rounded-full">{category.productCount}</span>
                 </label>
               ))}
             </div>
           </FilterSection>
 
-          {/* Price Range Filter */}
-          <FilterSection
-            title="Price Range (₹)"
-            icon={<DollarSign className="h-5 w-5" />}
-            sectionKey="price"
-          >
+          <FilterSection title="Price Range (₹)" icon={<DollarSign className="h-5 w-5" />} isExpanded={expandedSections.price} onToggle={() => toggleSection('price')}>
             <div className="space-y-4">
               <div className="flex items-center space-x-4">
                 <div className="flex-1">
                   <label className="block text-xs text-neutral-600 mb-2 font-medium">Minimum</label>
-                  <input
-                    type="number"
-                    value={filters.priceRange[0]}
-                    onChange={(e) => updateFilter('priceRange', [parseInt(e.target.value) || 0, filters.priceRange[1]])}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-neutral-200 focus:border-neutral-400 transition-all"
-                    placeholder="1000"
-                  />
+                  <input type="number" value={filters.priceRange[0]} onChange={(e) => updateFilter('priceRange', [parseInt(e.target.value) || 0, filters.priceRange[1]])} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" placeholder="1000" />
                 </div>
                 <div className="flex-1">
                   <label className="block text-xs text-neutral-600 mb-2 font-medium">Maximum</label>
-                  <input
-                    type="number"
-                    value={filters.priceRange[1]}
-                    onChange={(e) => updateFilter('priceRange', [filters.priceRange[0], parseInt(e.target.value) || 25000])}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-neutral-200 focus:border-neutral-400 transition-all"
-                    placeholder="25000"
-                  />
+                  <input type="number" value={filters.priceRange[1]} onChange={(e) => updateFilter('priceRange', [filters.priceRange[0], parseInt(e.target.value) || 25000])} className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm" placeholder="25000" />
                 </div>
               </div>
               <div className="flex items-center justify-between text-xs text-neutral-500">
                 <span>₹{filters.priceRange[0].toLocaleString('en-IN')}</span>
                 <span>₹{filters.priceRange[1].toLocaleString('en-IN')}</span>
               </div>
-              {/* Luxury Price Range Buttons */}
               <div className="grid grid-cols-2 gap-3 mt-4">
                 {[
                   { range: [1000, 5000], label: '₹1K - ₹5K', desc: 'Premium' },
@@ -391,11 +228,7 @@ export const AttrFilters: React.FC<AttrFiltersProps> = ({
                   { range: [10000, 15000], label: '₹10K - ₹15K', desc: 'Elite' },
                   { range: [15000, 25000], label: '₹15K+', desc: 'Royal' }
                 ].map(({ range, label, desc }) => (
-                  <button
-                    key={label}
-                    onClick={() => updateFilter('priceRange', range)}
-                    className="px-3 py-3 text-xs border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-all text-left"
-                  >
+                  <button key={label} onClick={() => updateFilter('priceRange', range as [number, number])} className="px-3 py-3 text-xs border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-all text-left">
                     <div className="font-medium text-neutral-700">{label}</div>
                     <div className="text-neutral-500 text-xs">{desc}</div>
                   </button>
@@ -404,158 +237,74 @@ export const AttrFilters: React.FC<AttrFiltersProps> = ({
             </div>
           </FilterSection>
 
-          {/* Longevity Filter */}
-          <FilterSection
-            title="Longevity"
-            icon={<Clock className="h-5 w-5" />}
-            sectionKey="longevity"
-            premium
-          >
+          <FilterSection title="Longevity" icon={<Clock className="h-5 w-5" />} isExpanded={expandedSections.longevity} onToggle={() => toggleSection('longevity')} premium>
             <div className="space-y-3 max-h-40 overflow-y-auto pr-2">
-              {longevityOptions.map((option) => (
-                <label key={option.value} className="flex items-center space-x-3 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={filters.longevity.includes(option.value)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        updateFilter('longevity', [...filters.longevity, option.value]);
-                      } else {
-                        updateFilter('longevity', filters.longevity.filter(l => l !== option.value));
-                      }
-                    }}
-                    className="form-checkbox h-4 w-4 text-amber-600 rounded focus:ring-amber-500"
-                  />
-                  <span className="text-lg">{option.icon}</span>
-                  <span className="text-neutral-700 group-hover:text-neutral-900 transition-colors text-sm">
-                    {option.label}
-                  </span>
+              {longevityOptions.map((opt) => (
+                <label key={opt.value} className="flex items-center space-x-3 cursor-pointer group">
+                  <input type="checkbox" checked={filters.longevity.includes(opt.value)} onChange={(e) => {
+                    const next = e.target.checked ? [...filters.longevity, opt.value] : filters.longevity.filter(l => l !== opt.value);
+                    updateFilter('longevity', next);
+                  }} className="form-checkbox h-4 w-4 text-amber-600 rounded" />
+                  <span className="text-lg">{opt.icon}</span>
+                  <span className="text-neutral-700 group-hover:text-neutral-900 transition-colors text-sm">{opt.label}</span>
                 </label>
               ))}
             </div>
           </FilterSection>
 
-          {/* Sillage Filter */}
-          <FilterSection
-            title="Sillage (Projection)"
-            icon={<Sparkles className="h-5 w-5" />}
-            sectionKey="sillage"
-            premium
-          >
+          <FilterSection title="Sillage (Projection)" icon={<Sparkles className="h-5 w-5" />} isExpanded={expandedSections.sillage} onToggle={() => toggleSection('sillage')} premium>
             <div className="space-y-3 max-h-40 overflow-y-auto pr-2">
-              {sillageOptions.map((option) => (
-                <label key={option.value} className="flex items-center space-x-3 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={filters.sillage.includes(option.value)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        updateFilter('sillage', [...filters.sillage, option.value]);
-                      } else {
-                        updateFilter('sillage', filters.sillage.filter(s => s !== option.value));
-                      }
-                    }}
-                    className="form-checkbox h-4 w-4 text-amber-600 rounded focus:ring-amber-500"
-                  />
-                  <span className="text-lg">{option.icon}</span>
-                  <span className="text-neutral-700 group-hover:text-neutral-900 transition-colors text-sm">
-                    {option.label}
-                  </span>
+              {sillageOptions.map((opt) => (
+                <label key={opt.value} className="flex items-center space-x-3 cursor-pointer group">
+                  <input type="checkbox" checked={filters.sillage.includes(opt.value)} onChange={(e) => {
+                    const next = e.target.checked ? [...filters.sillage, opt.value] : filters.sillage.filter(s => s !== opt.value);
+                    updateFilter('sillage', next);
+                  }} className="form-checkbox h-4 w-4 text-amber-600 rounded" />
+                  <span className="text-lg">{opt.icon}</span>
+                  <span className="text-neutral-700 group-hover:text-neutral-900 transition-colors text-sm">{opt.label}</span>
                 </label>
               ))}
             </div>
           </FilterSection>
 
-          {/* Concentration Filter */}
-          <FilterSection
-            title="Concentration"
-            icon={<Droplets className="h-5 w-5" />}
-            sectionKey="concentration"
-            premium
-          >
+          <FilterSection title="Concentration" icon={<Droplets className="h-5 w-5" />} isExpanded={expandedSections.concentration} onToggle={() => toggleSection('concentration')} premium>
             <div className="space-y-3 max-h-40 overflow-y-auto pr-2">
-              {concentrationOptions.map((option) => (
-                <label key={option.value} className="flex items-center space-x-3 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={filters.concentration.includes(option.value)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        updateFilter('concentration', [...filters.concentration, option.value]);
-                      } else {
-                        updateFilter('concentration', filters.concentration.filter(c => c !== option.value));
-                      }
-                    }}
-                    className={`form-checkbox h-4 w-4 rounded focus:ring-amber-500 ${
-                      option.premium ? 'text-amber-600' : 'text-neutral-600'
-                    }`}
-                  />
-                  <span className={`text-neutral-700 group-hover:text-neutral-900 transition-colors text-sm ${
-                    option.premium ? 'font-medium' : ''
-                  }`}>
-                    {option.label}
-                    {option.premium && <Crown className="inline h-3 w-3 ml-1 text-amber-500" />}
-                  </span>
+              {concentrationOptions.map((opt) => (
+                <label key={opt.value} className="flex items-center space-x-3 cursor-pointer group">
+                  <input type="checkbox" checked={filters.concentration.includes(opt.value)} onChange={(e) => {
+                    const next = e.target.checked ? [...filters.concentration, opt.value] : filters.concentration.filter(c => c !== opt.value);
+                    updateFilter('concentration', next);
+                  }} className="form-checkbox h-4 w-4 text-amber-600 rounded" />
+                  <span className="text-neutral-700 group-hover:text-neutral-900 transition-colors text-sm">{opt.label}</span>
                 </label>
               ))}
             </div>
           </FilterSection>
 
-          {/* Origins Filter */}
-          <FilterSection
-            title="Origin"
-            icon={<MapPin className="h-5 w-5" />}
-            sectionKey="origins"
-          >
+          <FilterSection title="Origin" icon={<MapPin className="h-5 w-5" />} isExpanded={expandedSections.origins} onToggle={() => toggleSection('origins')}>
             <div className="space-y-3 max-h-40 overflow-y-auto pr-2">
-              {originOptions.map((option) => (
-                <label key={option.value} className="flex items-center space-x-3 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={filters.origins.includes(option.value)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        updateFilter('origins', [...filters.origins, option.value]);
-                      } else {
-                        updateFilter('origins', filters.origins.filter(o => o !== option.value));
-                      }
-                    }}
-                    className="form-checkbox h-4 w-4 text-neutral-600 rounded focus:ring-neutral-500"
-                  />
-                  <span className="text-lg">{option.flag}</span>
-                  <span className="text-neutral-700 group-hover:text-neutral-900 transition-colors text-sm">
-                    {option.label}
-                  </span>
+              {originOptions.map((opt) => (
+                <label key={opt.value} className="flex items-center space-x-3 cursor-pointer group">
+                  <input type="checkbox" checked={filters.origins.includes(opt.value)} onChange={(e) => {
+                    const next = e.target.checked ? [...filters.origins, opt.value] : filters.origins.filter(o => o !== opt.value);
+                    updateFilter('origins', next);
+                  }} className="form-checkbox h-4 w-4 text-neutral-600 rounded" />
+                  <span className="text-lg">{opt.flag}</span>
+                  <span className="text-neutral-700 group-hover:text-neutral-900 transition-colors text-sm">{opt.label}</span>
                 </label>
               ))}
             </div>
           </FilterSection>
 
-          {/* Fragrance Family Filter */}
-          <FilterSection
-            title="Fragrance Family"
-            icon={<Flower2 className="h-5 w-5" />}
-            sectionKey="fragranceFamily"
-          >
+          <FilterSection title="Fragrance Family" icon={<Flower2 className="h-5 w-5" />} isExpanded={expandedSections.fragranceFamily} onToggle={() => toggleSection('fragranceFamily')}>
             <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto pr-2 pb-2">
-              {fragranceFamilyOptions.map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() => {
-                    if (filters.fragranceFamily.includes(option.value)) {
-                      updateFilter('fragranceFamily', filters.fragranceFamily.filter(f => f !== option.value));
-                    } else {
-                      updateFilter('fragranceFamily', [...filters.fragranceFamily, option.value]);
-                    }
-                  }}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
-                    filters.fragranceFamily.includes(option.value)
-                      ? 'bg-gradient-to-r from-neutral-100 to-neutral-200 text-neutral-700 border border-neutral-300 shadow-sm'
-                      : 'bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300'
-                  }`}
-                >
-                  <span>{option.icon}</span>
-                  <span>{option.label}</span>
+              {fragranceFamilyOptions.map((opt) => (
+                <button key={opt.value} onClick={() => {
+                  const next = filters.fragranceFamily.includes(opt.value) ? filters.fragranceFamily.filter(f => f !== opt.value) : [...filters.fragranceFamily, opt.value];
+                  updateFilter('fragranceFamily', next);
+                }} className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${filters.fragranceFamily.includes(opt.value) ? 'bg-neutral-100 text-neutral-700 border border-neutral-300' : 'bg-white text-neutral-600 border border-neutral-200'}`}>
+                  <span>{opt.icon}</span>
+                  <span>{opt.label}</span>
                 </button>
               ))}
             </div>
@@ -565,3 +314,4 @@ export const AttrFilters: React.FC<AttrFiltersProps> = ({
     </div>
   );
 };
+

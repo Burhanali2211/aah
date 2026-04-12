@@ -26,7 +26,7 @@ interface ContactSubmission {
 interface ContactSubmissionDetailsProps {
   submission: ContactSubmission;
   onBack: () => void;
-  onUpdate: (id: string, status: string, adminNotes?: string) => Promise<void>;
+  onUpdate: (id: string, status: ContactSubmission['status'], adminNotes?: string) => Promise<void>;
 }
 
 export const ContactSubmissionDetails: React.FC<ContactSubmissionDetailsProps> = ({
@@ -58,7 +58,7 @@ export const ContactSubmissionDetails: React.FC<ContactSubmissionDetailsProps> =
     }
   };
 
-  const handleQuickAction = async (newStatus: string) => {
+  const handleQuickAction = async (newStatus: ContactSubmission['status']) => {
     setIsUpdating(true);
     try {
       await onUpdate(submission.id, newStatus, adminNotes);

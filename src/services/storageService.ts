@@ -18,6 +18,23 @@ export class StorageService {
     folder: string = 'uploads',
     onProgress?: (progress: UploadProgress) => void
   ): Promise<string> {
+    // Auth guard: must be authenticated to upload
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      throw new Error('Authentication required to upload images');
+    }
+
+    // Folder validation: only allow specific folders and prevent path traversal
+    const ALLOWED_FOLDERS = ['products', 'avatars', 'uploads', 'categories'] as const;
+    const sanitizedFolder = folder
+      .replace(/\.\./g, '') // strip traversal sequences
+      .replace(/[^a-zA-Z0-9_-]/g, '') // strip everything except safe chars
+      .toLowerCase();
+
+    if (!ALLOWED_FOLDERS.includes(sanitizedFolder as any)) {
+      throw new Error(`Invalid upload folder: "${folder}". Must be one of: ${ALLOWED_FOLDERS.join(', ')}`);
+    }
+
     // Declare outside try so it can be cleared in both success and error paths
     let progressInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -47,7 +64,7 @@ export class StorageService {
       }
 
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
-      const path = `${folder}/${fileName}`;
+      const path = `${sanitizedFolder}/${fileName}`;
 
       const { data, error } = await supabase.storage
         .from(BUCKET_NAME)

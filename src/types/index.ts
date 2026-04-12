@@ -97,38 +97,14 @@ export interface Collection {
   updatedAt?: Date;
 }
 
-export interface Collection {
-  id: string;
-  name: string;
-  slug?: string;
-  description?: string;
-  shortDescription?: string;
-  image: string;
-  bannerImage?: string;
-  type: 'seasonal' | 'limited' | 'signature' | 'exclusive' | 'heritage' | 'modern';
-  status: 'active' | 'inactive' | 'coming_soon' | 'sold_out';
-  price?: number;
-  originalPrice?: number;
-  discount?: number;
-  productIds: string[]; // Array of product IDs in this collection
-  productCount: number;
-  featured: boolean;
-  isExclusive: boolean;
-  launchDate?: Date;
-  endDate?: Date;
-  sortOrder?: number;
-  tags: string[];
-  metaTitle?: string;
-  metaDescription?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+
 
 export interface CartItem {
   id?: string; // New field from DB
   product: Product;
   productId?: string; // Maps to product_id in DB
   variantId?: string; // Maps to variant_id in DB
+  selectedOptions?: Record<string, string>; // Options selected for this item
   quantity: number;
   unitPrice?: number; // Maps to unit_price in DB
   totalPrice?: number; // Maps to total_price in DB

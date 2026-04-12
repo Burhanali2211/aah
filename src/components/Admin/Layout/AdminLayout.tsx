@@ -10,11 +10,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  // Close mobile sidebar on route change
-  useEffect(() => {
-    setMobileSidebarOpen(false);
-  }, []);
-
   // Close mobile sidebar when window is resized to desktop
   useEffect(() => {
     const handleResize = () => {
@@ -43,7 +38,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         {/* Header */}
         <AdminHeader
           onMenuClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-          sidebarOpen={sidebarOpen}
         />
 
         {/* Page Content */}

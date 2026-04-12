@@ -80,7 +80,7 @@ export function transformKeysToSnake<T>(obj: any): T {
 export function transformProduct(product: any): any {
   if (!product) return product;
   
-  const transformed = transformKeysToCamel(product);
+  const transformed: any = transformKeysToCamel(product);
   
   // Handle special field mappings
   if ('isFeatured' in transformed) {
@@ -140,11 +140,29 @@ export function transformProduct(product: any): any {
     transformed.originalPrice = Number(transformed.originalPrice);
   }
   
-  // Ensure sellerName has a default value
-  if (!transformed.sellerName) {
-    transformed.sellerName = '';
+  // Default values for required fields to satisfy Product interface
+  if (!transformed.sellerId) {
+    transformed.sellerId = '';
   }
   
+  if (!transformed.sellerName) {
+    transformed.sellerName = 'Aligarh Attar House';
+  }
+  
+  if (transformed.showOnHomepage === undefined) {
+    transformed.showOnHomepage = false;
+  }
+
+  if (transformed.createdAt) {
+    transformed.createdAt = new Date(transformed.createdAt);
+  } else {
+    transformed.createdAt = new Date(0);
+  }
+
+  if (transformed.updatedAt) {
+    transformed.updatedAt = new Date(transformed.updatedAt);
+  }
+
   return transformed;
 }
 
@@ -162,7 +180,7 @@ export function transformProducts(products: any[]): any[] {
 export function transformCategory(category: any): any {
   if (!category) return category;
   
-  const transformed = transformKeysToCamel(category);
+  const transformed: any = transformKeysToCamel(category);
   
   // Handle imageUrl field - backend sends image_url which becomes imageUrl
   // But we also want to keep image_url for backward compatibility

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Package,
@@ -8,39 +8,20 @@ import {
   Tag,
   BarChart3,
   Settings,
-  LogOut,
-  Menu,
-  X,
-  ChevronRight,
-  Home,
-  Bell,
-  Shield,
+  Warehouse,
+  Store,
+  MessageSquare,
   Globe,
   Share2,
   Phone,
   Link2,
-  ChevronDown,
-  Crown,
-  Warehouse,
-  Store,
-  MessageSquare,
 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useAdminDashboardSettings } from '../../../hooks/useAdminDashboardSettings';
-import { isValidImageUrl } from '../../../utils/images';
-
-interface AdminDashboardLayoutProps {
-  children: React.ReactNode;
-  title: string;
-  subtitle?: string;
-}
-
-interface NavItem {
-  name: string;
-  path: string;
-  icon: React.ElementType;
-  children?: { name: string; path: string; icon: React.ElementType }[];
-}
+import { AdminDashboardLayoutProps, NavItem } from './AdminDashboardLayout/types';
+import { Sidebar } from './AdminDashboardLayout/Sidebar';
+import { DesktopHeader } from './AdminDashboardLayout/DesktopHeader';
+import { MobileHeader } from './AdminDashboardLayout/MobileHeader';
 
 const navItems: NavItem[] = [
   { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
@@ -92,10 +73,13 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
   const { settings } = useAdminDashboardSettings();
 
   useEffect(() => {
-    setSidebarOpen(false);
-    if (location.pathname.includes('/admin/settings')) {
-      setExpandedItems(prev => prev.includes('/admin/settings') ? prev : [...prev, '/admin/settings']);
-    }
+    const timer = setTimeout(() => {
+      setSidebarOpen(prev => prev === true ? false : prev);
+      if (location.pathname.includes('/admin/settings')) {
+        setExpandedItems(prev => prev.includes('/admin/settings') ? prev : [...prev, '/admin/settings']);
+      }
+    }, 0);
+    return () => clearTimeout(timer);
   }, [location.pathname]);
 
   const handleLogout = async () => {
@@ -124,180 +108,14 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
     return user?.email?.charAt(0).toUpperCase() || 'A';
   };
 
-  const SidebarContent = () => (
-    <>
-      {/* Sidebar Header */}
-      <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 flex-shrink-0">
-        <Link to="/" className="flex items-center gap-2.5">
-          {settings.dashboard_logo_url && isValidImageUrl(settings.dashboard_logo_url) ? (
-            <img
-              src={settings.dashboard_logo_url}
-              alt="Logo"
-              className="w-9 h-9 rounded-xl object-contain"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-            />
-          ) : (
-            <div className="w-9 h-9 rounded-xl bg-slate-700 flex items-center justify-center shadow-sm flex-shrink-0">
-              <Crown className="w-5 h-5 text-white" />
-            </div>
-          )}
-          <span className="text-base font-bold text-gray-900 truncate">
-            {settings.dashboard_name || 'Admin Panel'}
-          </span>
-        </Link>
-        <button
-          onClick={() => setSidebarOpen(false)}
-          className="p-2 rounded-xl hover:bg-gray-100 transition-colors lg:hidden"
-          aria-label="Close menu"
-        >
-          <X className="w-5 h-5 text-gray-500" />
-        </button>
-      </div>
-
-      {/* Admin Profile Card */}
-      <div className="p-3 flex-shrink-0">
-        <div className="bg-slate-50 rounded-xl p-3 border border-slate-200">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0">
-              <span className="text-white text-sm font-bold">{getInitials()}</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-900 text-sm truncate">
-                {user?.fullName || 'Admin'}
-              </p>
-              <p className="text-xs text-slate-500 font-medium">Super Admin</p>
-            </div>
-            <span className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium text-slate-600 bg-slate-100 rounded-full">
-              <Shield className="w-3 h-3" />
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Navigation */}
-      <nav
-        className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-      >
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const active = isActive(item.path);
-          const hasChildren = item.children && item.children.length > 0;
-          const isExpanded = expandedItems.includes(item.path);
-
-          return (
-            <div key={item.path}>
-              {hasChildren ? (
-                <button
-                  onClick={() => toggleExpanded(item.path)}
-                  className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 min-h-[44px] ${
-                    active
-                      ? 'bg-slate-100 text-slate-900'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-slate-700' : 'text-gray-500'}`} />
-                    <span className="font-medium text-sm">{item.name}</span>
-                  </div>
-                  <ChevronDown className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
-                </button>
-              ) : (
-                <Link
-                  to={item.path}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 min-h-[44px] ${
-                    active
-                      ? 'bg-slate-100 text-slate-900'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <Icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-slate-700' : 'text-gray-500'}`} />
-                  <span className="font-medium text-sm flex-1">{item.name}</span>
-                  {active && <ChevronRight className="w-4 h-4 text-slate-400 flex-shrink-0" />}
-                </Link>
-              )}
-
-              {hasChildren && isExpanded && (
-                <div className="ml-4 mt-0.5 mb-1 space-y-0.5 border-l-2 border-gray-200 pl-3">
-                  {item.children?.map((child) => {
-                    const ChildIcon = child.icon;
-                    const childActive = location.pathname.startsWith(child.path);
-                    return (
-                      <Link
-                        key={child.path}
-                        to={child.path}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all min-h-[42px] ${
-                          childActive
-                            ? 'bg-slate-100 text-slate-900'
-                            : 'text-gray-600 hover:bg-gray-50'
-                        }`}
-                      >
-                        <ChildIcon className={`w-4 h-4 flex-shrink-0 ${childActive ? 'text-slate-700' : 'text-gray-400'}`} />
-                        <span className="text-sm">{child.name}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </nav>
-
-      {/* Bottom Actions */}
-      <div
-        className="p-3 border-t border-gray-200 space-y-0.5 flex-shrink-0"
-        style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
-      >
-        <Link
-          to="/"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors min-h-[44px]"
-        >
-          <Home className="w-5 h-5 text-gray-500 flex-shrink-0" />
-          <span className="font-medium text-sm">View Store</span>
-        </Link>
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-600 hover:bg-red-50 transition-colors min-h-[44px]"
-        >
-          <LogOut className="w-5 h-5 flex-shrink-0" />
-          <span className="font-medium text-sm">Sign Out</span>
-        </button>
-      </div>
-    </>
-  );
-
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Mobile Header */}
-      <header className="lg:hidden sticky top-0 z-40 bg-white border-b border-gray-200">
-        <div className="flex items-center justify-between px-4 py-3 h-14">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 -ml-1 rounded-xl hover:bg-gray-100 transition-colors"
-            aria-label="Open menu"
-          >
-            <Menu className="w-6 h-6 text-gray-700" />
-          </button>
-
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-slate-700 flex items-center justify-center">
-              <Crown className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-base font-bold text-gray-900">
-              {settings.dashboard_name || 'Admin'}
-            </span>
-          </div>
-
-          <Link
-            to="/"
-            className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
-            aria-label="View store"
-          >
-            <Home className="w-5 h-5 text-gray-600" />
-          </Link>
-        </div>
-      </header>
+      <MobileHeader 
+        settings={settings} 
+        setSidebarOpen={setSidebarOpen} 
+        title={title} 
+        subtitle={subtitle} 
+      />
 
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
@@ -314,57 +132,28 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <SidebarContent />
+        <Sidebar 
+          settings={settings}
+          user={user}
+          navItems={navItems}
+          setSidebarOpen={setSidebarOpen}
+          expandedItems={expandedItems}
+          toggleExpanded={toggleExpanded}
+          isActive={isActive}
+          handleLogout={handleLogout}
+          getInitials={getInitials}
+          locationPathname={location.pathname}
+        />
       </aside>
 
       {/* Main Content */}
       <main className="lg:ml-72 min-h-screen flex flex-col">
-        {/* Desktop Header */}
-        <header className="hidden lg:block sticky top-0 z-30 bg-white border-b border-gray-200">
-          <div className="flex items-center justify-between px-6 xl:px-8 py-4">
-            <div>
-              <nav className="flex items-center gap-1.5 text-sm text-gray-400 mb-1">
-                <Link to="/admin" className="hover:text-slate-700 transition-colors">
-                  Admin
-                </Link>
-                <ChevronRight className="w-4 h-4" />
-                <span className="text-gray-700 font-medium">{title}</span>
-              </nav>
-              <h1 className="text-xl font-bold text-gray-900">{title}</h1>
-              {subtitle && <p className="text-sm text-gray-500 mt-0.5">{subtitle}</p>}
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button className="relative p-2 rounded-xl hover:bg-gray-100 transition-colors">
-                <Bell className="w-5 h-5 text-gray-500" />
-              </button>
-
-              <Link
-                to="/"
-                className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors"
-              >
-                <Home className="w-4 h-4" />
-                <span className="font-medium text-sm">Store</span>
-              </Link>
-
-              <div className="flex items-center gap-3 pl-3 border-l border-gray-200">
-                <div className="text-right hidden xl:block">
-                  <p className="text-sm font-semibold text-gray-900">{user?.fullName || 'Admin'}</p>
-                  <p className="text-xs text-slate-500">Super Admin</p>
-                </div>
-                <div className="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0">
-                  <span className="text-white text-sm font-semibold">{getInitials()}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Mobile Page Title */}
-        <div className="lg:hidden px-4 py-3 bg-white border-b border-gray-200">
-          <h1 className="text-lg font-bold text-gray-900">{title}</h1>
-          {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
-        </div>
+        <DesktopHeader 
+          title={title} 
+          subtitle={subtitle} 
+          user={user} 
+          getInitials={getInitials} 
+        />
 
         {/* Page Content */}
         <div className="flex-1 p-4 lg:p-6 xl:p-8">

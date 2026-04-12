@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback, memo, useState } from 'react';
-import { Star, Heart, ShoppingCart, Check, Zap } from 'lucide-react';
+import { Star, Heart, ShoppingCart, Check, Zap, Activity } from 'lucide-react';
 import { Product } from '../../types';
 import { useCart } from '../../contexts/ShoppingContext';
 import { useWishlist } from '../../contexts/ShoppingContext';
@@ -50,12 +50,12 @@ export const ProductCard: React.FC<ProductCardProps> = memo(({
 
   // Memoize derived category flags — no string ops on every render
   const { isTech, isFashion } = useMemo(() => {
-    const catName = (product.categoryName || product.category || '').toLowerCase();
+    const catName = (product.category || '').toLowerCase();
     return {
       isTech: catName.includes('electronics'),
       isFashion: catName.includes('fashion'),
     };
-  }, [product.categoryName, product.category]);
+  }, [product.category]);
 
   if (isListView) {
     return (
@@ -77,7 +77,7 @@ export const ProductCard: React.FC<ProductCardProps> = memo(({
             {/* Category & Rating Row */}
             <div className="flex items-center gap-2 mb-1 sm:mb-2">
               <span className="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider px-1.5 sm:px-2 py-0.5 rounded bg-green-50 text-green-800 truncate max-w-[80px] sm:max-w-none">
-                {product.categoryName || product.category || 'Discovery'}
+                {product.category || 'Discovery'}
               </span>
               <div className="flex items-center text-amber-400 ml-auto flex-shrink-0">
                 <Star className="h-3 sm:h-3.5 w-3 sm:w-3.5 fill-current" />
@@ -200,15 +200,16 @@ export const ProductCard: React.FC<ProductCardProps> = memo(({
       {/* Info */}
       <div className="flex flex-col flex-1 px-2.5 sm:px-4 pt-2 sm:pt-3 pb-2.5 sm:pb-4 gap-0.5 sm:gap-1">
         {/* Category */}
-        {(product.categoryName || product.category) && (
+        {product.category && (
           <span className="text-[10px] sm:text-xs font-semibold text-green-600 leading-tight">
-            {product.categoryName || product.category}
+            {product.category}
           </span>
         )}
 
         {/* Rating */}
         {product.rating > 0 && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center space-x-1">
+            <Activity className="w-3 h-3 text-blue-500" />
             <div className="flex items-center gap-0.5">
               {[1,2,3,4,5].map(s => (
                 <Star key={s} className={`h-2.5 w-2.5 sm:h-3 sm:w-3 ${s <= Math.round(product.rating) ? 'fill-amber-400 text-amber-400' : 'fill-gray-200 text-gray-200'}`} />

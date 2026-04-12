@@ -43,7 +43,11 @@ export const AddressProvider: React.FC<{ children: ReactNode }> = ({ children })
     setLoading(true);
     try {
       const data = await db.getAddresses(user.id);
-      setAddresses(data.map(mapDbAddressToAppAddress));
+      if (data) {
+        setAddresses(data.map(mapDbAddressToAppAddress));
+      } else {
+        setAddresses([]);
+      }
     } catch (error) {
       console.error('Error fetching addresses:', error);
       showNotification({

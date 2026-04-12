@@ -3,51 +3,12 @@ import {
   BarChart3, TrendingUp, DollarSign, ShoppingCart,
   Eye, Users, ArrowUpRight, ArrowDownRight, Download, Loader2, RefreshCw
 } from 'lucide-react';
-import {
-  LineChart, Line, BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
-} from 'recharts';
 import { AdminDashboardLayout } from '../Layout/AdminDashboardLayout';
 import { supabase } from '../../../lib/supabase';
 import { useNotification } from '../../../contexts/NotificationContext';
-
-interface AnalyticsMetrics {
-  totalRevenue: { value: number; change: number; trend: 'up' | 'down' };
-  totalOrders: { value: number; change: number; trend: 'up' | 'down' };
-  pageViews: { value: number; change: number; trend: 'up' | 'down' };
-  conversionRate: { value: number; change: number; trend: 'up' | 'down' };
-  avgOrderValue: { value: number; change: number; trend: 'up' | 'down' };
-  newUsers: { value: number; change: number; trend: 'up' | 'down' };
-}
-
-interface TopProduct {
-  id: string;
-  name: string;
-  revenue: number;
-  orders: number;
-  growth: number;
-  price?: string;
-  images?: string[];
-}
-
-interface RevenueTrend {
-  date: string;
-  revenue: number;
-  orders: number;
-}
-
-interface TrafficSource {
-  source: string;
-  visits: number;
-  percentage: number;
-}
-
-interface AnalyticsData {
-  metrics: AnalyticsMetrics;
-  topProducts: TopProduct[];
-  revenueTrend: RevenueTrend[];
-  trafficSources: TrafficSource[];
-}
+import { AnalyticsData, RevenueTrend, TopProduct } from './types';
+import { RevenueChart } from './Charts/RevenueChart';
+import { OrdersChart } from './Charts/OrdersChart';
 
 export const AdminAnalyticsPage: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<'7days' | '30days' | '90days' | 'year'>('30days');
@@ -111,17 +72,17 @@ export const AdminAnalyticsPage: React.FC = () => {
       const topProducts: TopProduct[] = productIds.map((id) => {
         const pr = productRevenue[id];
         const p = productMap[id];
-        return { id, name: p?.name || 'Product', revenue: pr.revenue, orders: pr.orders, growth: 0, price: undefined, images: p?.images };
+        return { id, name: p?.name || 'Product', revenue: pr.revenue, orders: pr.orders, growth: 0, images: p?.images };
       }).sort((a, b) => b.revenue - a.revenue);
 
       setData({
         metrics: {
-          totalRevenue: { value: totalRevenue, change: 0, trend: 'up' as const },
-          totalOrders: { value: totalOrdersCount, change: 0, trend: totalOrdersCount > 0 ? 'up' as const : 'neutral' as const },
-          pageViews: { value: 0, change: 0, trend: 'neutral' as const },
-          conversionRate: { value: 0, change: 0, trend: 'neutral' as const },
-          avgOrderValue: { value: avgOrderValue, change: 0, trend: 'up' as const },
-          newUsers: { value: newUsersCount, change: 0, trend: newUsersCount > 0 ? 'up' as const : 'neutral' as const }
+          totalRevenue: { value: totalRevenue, change: 0, trend: 'up' },
+          totalOrders: { value: totalOrdersCount, change: 0, trend: totalOrdersCount > 0 ? 'up' : 'neutral' },
+          pageViews: { value: 0, change: 0, trend: 'neutral' },
+          conversionRate: { value: 0, change: 0, trend: 'neutral' },
+          avgOrderValue: { value: avgOrderValue, change: 0, trend: 'up' },
+          newUsers: { value: newUsersCount, change: 0, trend: newUsersCount > 0 ? 'up' : 'neutral' }
         },
         topProducts,
         revenueTrend,
@@ -275,8 +236,8 @@ export const AdminAnalyticsPage: React.FC = () => {
                 <div className={`w-8 h-8 ${metric.iconBg} rounded-lg flex items-center justify-center`}>
                   <metric.icon className={`w-4 h-4 ${metric.iconColor}`} />
                 </div>
-                <span className={`flex items-center gap-0.5 text-xs font-medium ${metric.trend === 'up' ? 'text-emerald-600' : 'text-red-500'}`}>
-                  {metric.trend === 'up' ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                <span className={`flex items-center gap-0.5 text-xs font-medium ${metric.trend === 'up' ? 'text-emerald-600' : metric.trend === 'down' ? 'text-red-500' : 'text-gray-500'}`}>
+                  {metric.trend === 'up' ? <ArrowUpRight className="w-3 h-3" /> : metric.trend === 'down' ? <ArrowDownRight className="w-3 h-3" /> : null}
                   {fmtPct(metric.change)}
                 </span>
               </div>
@@ -290,51 +251,8 @@ export const AdminAnalyticsPage: React.FC = () => {
 
         {/* Charts */}
         <div className="grid lg:grid-cols-2 gap-4">
-          {/* Revenue Chart */}
-          <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-gray-900 mb-4">Revenue Trend</h3>
-            {chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={240}>
-                <LineChart data={chartData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="date" tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={{ stroke: '#e5e7eb' }} tickLine={false} />
-                  <YAxis tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={formatYAxis} width={55} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Line type="monotone" dataKey="revenue" stroke="#f59e0b" strokeWidth={2} dot={{ fill: '#f59e0b', r: 3 }} activeDot={{ r: 5 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-48 flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg">
-                <div className="text-center">
-                  <BarChart3 className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-                  <p className="text-xs text-gray-400">No revenue data for this period</p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Orders Chart */}
-          <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-gray-900 mb-4">Orders per Day</h3>
-            {chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={chartData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="date" tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={{ stroke: '#e5e7eb' }} tickLine={false} />
-                  <YAxis tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} width={30} allowDecimals={false} />
-                  <Tooltip contentStyle={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px' }} />
-                  <Bar dataKey="orders" fill="#3b82f6" radius={[3, 3, 0, 0]} name="Orders" />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-48 flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg">
-                <div className="text-center">
-                  <ShoppingCart className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-                  <p className="text-xs text-gray-400">No order data for this period</p>
-                </div>
-              </div>
-            )}
-          </div>
+          <RevenueChart chartData={chartData} formatYAxis={formatYAxis} CustomTooltip={CustomTooltip} />
+          <OrdersChart chartData={chartData} />
         </div>
 
         {/* Top Products Table */}
@@ -395,3 +313,4 @@ export const AdminAnalyticsPage: React.FC = () => {
 };
 
 export default AdminAnalyticsPage;
+

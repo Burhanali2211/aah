@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { CartItem, CartContextType, Product } from '../types';
 import { supabase, db } from '../lib/supabase';
+import { transformProduct } from '../lib/dataTransform';
 import { useAuth } from './AuthContext';
 import { useNotification } from './NotificationContext';
 
@@ -21,24 +22,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const mapDbCartItemToAppCartItem = (dbItem: any): CartItem => ({
     id: dbItem.id,
-    product: {
-      id: dbItem.products.id,
-      name: dbItem.products.name,
-      price: dbItem.products.price,
-      images: dbItem.products.images || [],
-      description: dbItem.products.description,
-      categoryId: dbItem.products.category_id,
-      sellerId: dbItem.products.seller_id,
-      stock: dbItem.products.stock,
-      rating: dbItem.products.rating || 0,
-      reviewCount: dbItem.products.review_count || 0,
-      featured: dbItem.products.is_featured || false,
-      showOnHomepage: dbItem.products.show_on_homepage || false,
-      reviews: [],
-      tags: dbItem.products.tags || [],
-      sellerName: dbItem.products.seller_name || 'Aligarh Attar House',
-      createdAt: new Date(dbItem.products.created_at)
-    },
+    product: transformProduct(dbItem.products),
     productId: dbItem.product_id,
     variantId: dbItem.variant_id,
     quantity: dbItem.quantity,
@@ -76,7 +60,11 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       if (user) {
         const data = await db.getCart(user.id);
-        setItems(data.map(mapDbCartItemToAppCartItem));
+        if (data) {
+          setItems(data.map(mapDbCartItemToAppCartItem));
+        } else {
+          setItems([]);
+        }
       } else {
         const guestItems = loadGuestCart();
         setItems(guestItems);

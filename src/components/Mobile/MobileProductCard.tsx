@@ -15,7 +15,7 @@ import { AddToCartButton } from '../Product/AddToCartButton';
 
 interface MobileProductCardProps {
   product: Product;
-  variant?: 'default' | 'compact' | 'featured';
+  variant?: 'default' | 'compact' | 'featured' | 'luxury';
 }
 
 export const MobileProductCard: React.FC<MobileProductCardProps> = ({
@@ -44,20 +44,6 @@ export const MobileProductCard: React.FC<MobileProductCardProps> = ({
       }
     }
   });
-
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (product.stock > 0) {
-      addItem(product);
-      showNotification({
-        type: 'success',
-        title: 'Added to Cart',
-        message: `${product.name} has been added to your cart.`,
-        duration: 3000
-      });
-    }
-  };
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.stopPropagation();

@@ -7,11 +7,27 @@ import { useNotification } from '../../../contexts/NotificationContext';
 import { useProducts } from '../../../contexts/ProductContext';
 import { Loader2 } from 'lucide-react';
 
+interface Product {
+  id: string;
+  name?: string;
+  slug?: string;
+  description?: string;
+  short_description?: string;
+  price?: number;
+  original_price?: number;
+  category_id?: string;
+  stock?: number;
+  min_stock_level?: number;
+  sku?: string;
+  is_featured?: boolean;
+  is_active?: boolean;
+  images?: string[];
+}
+
 interface ProductFormProps {
-  product: any | null;
+  product: Product | null;
   onClose: () => void;
   onSuccess: () => void;
-  endpointPrefix?: string; // Add endpoint prefix prop
 }
 
 interface FormData {
@@ -34,7 +50,7 @@ interface FormErrors {
   [key: string]: string;
 }
 
-export const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess, endpointPrefix = '/admin' }) => {
+export const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }) => {
   const [formData, setFormData] = useState<FormData>({
     name: '',
     slug: '',
@@ -52,7 +68,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSu
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const { showSuccess, showError } = useNotification();
   const { createProduct, updateProduct } = useProducts();
 
@@ -65,8 +81,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSu
         slug: product.slug || '',
         description: product.description || '',
         short_description: product.short_description || '',
-        price: product.price || '',
-        original_price: product.original_price || '',
+        price: product.price?.toString() || '',
+        original_price: product.original_price?.toString() || '',
         category_id: product.category_id || '',
         stock: product.stock?.toString() || '0',
         min_stock_level: product.min_stock_level?.toString() || '5',
@@ -80,7 +96,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSu
 
   const fetchCategories = async () => {
     try {
-      const { data, error } = await supabase.from('categories').select('*').order('name', { ascending: true });
+      const { data, error } = await supabase.from('categories').select('id, name').order('name', { ascending: true });
       if (error) throw error;
       setCategories(data || []);
     } catch (error) {
@@ -173,8 +189,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSu
       }
 
       onSuccess();
-    } catch (error: any) {
-      showError('Error', error.message || 'Failed to save product');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to save product';
+      showError('Error', msg);
     } finally {
       setLoading(false);
     }

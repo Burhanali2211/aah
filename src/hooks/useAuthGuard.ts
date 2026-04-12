@@ -14,7 +14,7 @@ export function useAuthGuard(redirectTo = '/auth') {
 
   useEffect(() => {
     // Subscribe to auth state changes
-    const { data: subscription } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       // If session lost while we have a user, redirect
       if (!session && user) {
         console.warn('[AUTH-GUARD] Session lost. Redirecting to login.');

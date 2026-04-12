@@ -10,6 +10,22 @@
 const https = require('https');
 const crypto = require('crypto');
 
+const ALLOWED_ORIGIN = process.env.FRONTEND_URL || 'https://aah-teal.vercel.app';
+
+function getCorsHeaders(req) {
+  const origin = req.headers.origin || '';
+  const isAllowed =
+    origin === ALLOWED_ORIGIN ||
+    origin.endsWith('.vercel.app') ||
+    origin === 'http://localhost:5173';
+  return {
+    'Access-Control-Allow-Origin': isAllowed ? origin : ALLOWED_ORIGIN,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Vary': 'Origin',
+  };
+}
+
 function razorpayRequest(path, method, body, keyId, keySecret) {
   return new Promise((resolve, reject) => {
     const auth = Buffer.from(`${keyId}:${keySecret}`).toString('base64');
@@ -97,9 +113,10 @@ function isRateLimited(ip) {
 
 module.exports = async function handler(req, res) {
   // CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  const corsHeaders = getCorsHeaders(req);
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    res.setHeader(key, value);
+  });
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();

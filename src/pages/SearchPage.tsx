@@ -21,7 +21,7 @@ export const SearchPage: React.FC = () => {
       const filtered = products.filter(product =>
         product.name.toLowerCase().includes(query.toLowerCase()) ||
         product.description.toLowerCase().includes(query.toLowerCase()) ||
-        product.category.toLowerCase().includes(query.toLowerCase()) ||
+        (product.category?.toLowerCase().includes(query.toLowerCase()) || false) ||
         (product.tags && product.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase())))
       );
       setFilteredProducts(filtered);

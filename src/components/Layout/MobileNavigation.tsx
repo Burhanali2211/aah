@@ -90,7 +90,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
     },
   ];
 
-  const { bindGestures } = useSwipeGesture({
+  const { onTouchStart, onTouchMove, onTouchEnd } = useSwipeGesture({
     onSwipeLeft: () => onClose(),
   });
 
@@ -99,11 +99,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
     setActiveDropdown(null);
   }, [location.pathname]);
 
-  useEffect(() => {
-    if (navRef.current && isOpen) {
-      bindGestures(navRef.current);
-    }
-  }, [isOpen, bindGestures]);
+
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -149,6 +145,9 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
       {/* Drawer */}
       <div
         ref={navRef}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
         className={`fixed top-0 left-0 h-full w-[85vw] max-w-[320px] bg-white z-50 shadow-2xl transform transition-transform duration-300 ease-out lg:hidden flex flex-col ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
