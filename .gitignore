@@ -29,13 +29,6 @@ logs/**/*.log
 *.ntvs*
 *.njsproj
 *.sln
-*.claude
-.env
-.env.production
-.env.local
-.env.example
-.agents
-.mcp.json
 
 # OS
 .DS_Store
@@ -43,6 +36,13 @@ Thumbs.db
 
 # Test coverage
 coverage/
+
+# AI and Environment
+.env
+.env.*
+.mcp.json
+.agents
+*.claude
 
 # Uploads
 uploads/

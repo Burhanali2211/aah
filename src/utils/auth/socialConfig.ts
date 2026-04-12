@@ -5,27 +5,27 @@ export const configureSocialAuth = () => {
   
   const config = {
     google: {
-      clientId: process.env.VITE_GOOGLE_CLIENT_ID,
+      clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
       redirectUri: `${window.location.origin}/auth/callback`,
       scope: 'openid email profile',
     },
     facebook: {
-      appId: process.env.VITE_FACEBOOK_APP_ID,
+      appId: import.meta.env.VITE_FACEBOOK_APP_ID,
       redirectUri: `${window.location.origin}/auth/callback`,
       scope: 'email,public_profile',
     },
     apple: {
-      clientId: process.env.VITE_APPLE_CLIENT_ID,
+      clientId: import.meta.env.VITE_APPLE_CLIENT_ID,
       redirectUri: `${window.location.origin}/auth/callback`,
       scope: 'name email',
     },
     github: {
-      clientId: process.env.VITE_GITHUB_CLIENT_ID,
+      clientId: import.meta.env.VITE_GITHUB_CLIENT_ID,
       redirectUri: `${window.location.origin}/auth/callback`,
       scope: 'user:email',
     },
     twitter: {
-      clientId: process.env.VITE_TWITTER_CLIENT_ID,
+      clientId: import.meta.env.VITE_TWITTER_CLIENT_ID,
       redirectUri: `${window.location.origin}/auth/callback`,
       scope: 'tweet.read users.read',
     }

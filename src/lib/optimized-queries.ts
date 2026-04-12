@@ -6,12 +6,7 @@
  * Expected performance: 10-100x faster than manual queries
  */
 
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.VITE_SUPABASE_ANON_KEY!
-)
+import { supabase } from './supabase'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SEARCH FUNCTIONS - Full-text indexed, 30x faster

@@ -98,7 +98,7 @@ if (typeof window !== 'undefined') {
     if (isExtensionError) {
       // Prevent extension errors from breaking the app
       event.preventDefault();
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.debug('Suppressed browser extension/non-critical error:', errorMessage || errorString);
       }
       return;
@@ -146,7 +146,7 @@ if (typeof window !== 'undefined') {
 
     if (isExtensionError) {
       // Suppress extension errors
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.debug('Suppressed browser extension/non-critical error:', errorMessage);
       }
       return true; // Prevent default error handling
