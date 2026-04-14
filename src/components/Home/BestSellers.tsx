@@ -34,9 +34,9 @@ export const BestSellers: React.FC = memo(() => {
 
         {/* Section header */}
         <div className="flex items-center justify-between mb-3">
-          <span className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+          <span className="text-sm font-bold text-gray-900 flex items-center gap-1.5 line-clamp-1">
             <TrendingUp className="h-4 w-4 text-green-700" />
-            Best Seller
+            Top Recommendations
           </span>
           <Link
             to="/products?sort=best_sellers"
@@ -88,19 +88,6 @@ export const BestSellers: React.FC = memo(() => {
 
             {/* ── RIGHT: Info + actions ── */}
             <div className="flex flex-col flex-1 min-w-0 p-4 sm:p-5 md:p-6">
-
-              {/* 1. Trust badge — first thing eyes see on the right */}
-              <div className="flex items-center gap-1.5 mb-2.5">
-                <span className="inline-flex items-center gap-1 bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">
-                  <Flame className="h-2.5 w-2.5" />
-                  #1 Best Seller
-                </span>
-                {product.category && (
-                  <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-500 text-[10px] font-medium px-2 py-0.5 rounded-full">
-                    {product.category}
-                  </span>
-                )}
-              </div>
 
               {/* 2. Product name */}
               <Link to={`/products/${product.id}`} className="block group/name mb-1.5">

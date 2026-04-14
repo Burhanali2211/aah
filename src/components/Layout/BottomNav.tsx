@@ -1,4 +1,6 @@
 import React, { memo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+
 import { Link, useLocation } from 'react-router-dom';
 import { Home, LayoutGrid, Store, ShoppingCart, Heart, User, LogIn } from 'lucide-react';
 import { useCart } from '../../contexts/ShoppingContext';
@@ -80,11 +82,19 @@ export const BottomNav: React.FC<BottomNavProps> = memo(({ onCartClick }) => {
         {centerVariant === 'cart' && (
           <button onClick={onCartClick} aria-label="Open cart" className={centerBtnClass}>
             <ShoppingCart size={22} strokeWidth={1.8} />
-            {itemCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 h-[18px] w-[18px] bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center leading-none">
-                {itemCount > 9 ? '9+' : itemCount}
-              </span>
-            )}
+            <AnimatePresence mode="popLayout">
+              {itemCount > 0 && (
+                <motion.span
+                  key={itemCount}
+                  initial={{ scale: 0.4, opacity: 0 }}
+                  animate={{ scale: [0.4, 1.3, 1], opacity: 1 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  className="absolute -top-0.5 -right-0.5 h-[18px] w-[18px] bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center leading-none pointer-events-none"
+                >
+                  {itemCount > 9 ? '9+' : itemCount}
+                </motion.span>
+              )}
+            </AnimatePresence>
             <span className="text-[10px] font-semibold mt-0.5 leading-none">Cart</span>
           </button>
         )}
@@ -106,11 +116,19 @@ export const BottomNav: React.FC<BottomNavProps> = memo(({ onCartClick }) => {
             strokeWidth={isActive('/wishlist') ? 2.5 : 1.8}
             color={iconColor(isActive('/wishlist'))}
           />
-          {wishlistItems.length > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 h-[15px] w-[15px] bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center leading-none">
-              {wishlistItems.length > 9 ? '9+' : wishlistItems.length}
-            </span>
-          )}
+          <AnimatePresence mode="popLayout">
+            {wishlistItems.length > 0 && (
+              <motion.span
+                key={wishlistItems.length}
+                initial={{ scale: 0.4, opacity: 0 }}
+                animate={{ scale: [0.4, 1.25, 1], opacity: 1 }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
+                className="absolute -top-1.5 -right-1.5 h-[15px] w-[15px] bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center leading-none pointer-events-none"
+              >
+                {wishlistItems.length > 9 ? '9+' : wishlistItems.length}
+              </motion.span>
+            )}
+          </AnimatePresence>
         </div>
         <span className={labelCls(isActive('/wishlist'))}>Wishlist</span>
       </Link>

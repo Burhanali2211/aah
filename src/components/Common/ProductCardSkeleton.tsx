@@ -18,9 +18,6 @@ export const ProductCardSkeleton: React.FC<ProductCardSkeletonProps> = ({ varian
         
         {/* Content Skeleton */}
         <div className="p-5">
-          {/* Category */}
-          <div className="h-3 bg-gray-200 rounded w-1/4 mb-2"></div>
-          
           {/* Title */}
           <div className="h-5 bg-gray-300 rounded w-3/4 mb-2"></div>
           <div className="h-5 bg-gray-300 rounded w-1/2 mb-3"></div>
@@ -103,10 +100,6 @@ export const ProductCardSkeleton: React.FC<ProductCardSkeletonProps> = ({ varian
         
         {/* Title */}
         <div className="h-5 bg-gray-300 rounded w-full mb-2"></div>
-        <div className="h-5 bg-gray-300 rounded w-3/4 mb-3"></div>
-        
-        {/* Category Tag */}
-        <div className="h-5 bg-gray-200 rounded w-20 mb-3"></div>
         
         {/* Price */}
         <div className="h-6 bg-gray-300 rounded w-24 mb-3"></div>

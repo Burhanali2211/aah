@@ -171,11 +171,19 @@ const Toast: React.FC<{ notification: Notification; onRemove: (id: string) => vo
         <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: dot, flexShrink: 0 }} />
 
         <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-          <span style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff', lineHeight: 1.3 }}>
-            {title}
-          </span>
-          {message && (
-            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.3, marginTop: '1px' }}>
+          {title ? (
+            <>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff', lineHeight: 1.3 }}>
+                {title}
+              </span>
+              {message && (
+                <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.3, marginTop: '1px' }}>
+                  {message}
+                </span>
+              )}
+            </>
+          ) : (
+            <span style={{ fontSize: '13px', fontWeight: 500, color: '#ffffff', lineHeight: 1.3 }}>
               {message}
             </span>
           )}
@@ -206,9 +214,15 @@ const Toast: React.FC<{ notification: Notification; onRemove: (id: string) => vo
     >
       <Icon style={{ width: 16, height: 16, color: dot, flexShrink: 0, marginTop: 1 }} />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff', margin: 0, lineHeight: 1.4 }}>{title}</p>
-        {message && (
-          <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)', margin: '2px 0 0', lineHeight: 1.4 }}>{message}</p>
+        {title ? (
+          <>
+            <p style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff', margin: 0, lineHeight: 1.4 }}>{title}</p>
+            {message && (
+              <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)', margin: '2px 0 0', lineHeight: 1.4 }}>{message}</p>
+            )}
+          </>
+        ) : (
+          <p style={{ fontSize: '13px', fontWeight: 500, color: '#ffffff', margin: 0, lineHeight: 1.4 }}>{message}</p>
         )}
       </div>
       <button

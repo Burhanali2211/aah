@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   X, Home, ShoppingBag, Sparkles, Tag, Info, User, ShoppingCart, Heart, 
@@ -220,11 +222,19 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             >
               <div className="relative">
                 <ShoppingCart className="h-4 w-4 text-gray-600" />
-                {itemCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-amber-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                    {itemCount > 9 ? '9+' : itemCount}
-                  </span>
-                )}
+                <AnimatePresence mode="popLayout">
+                  {itemCount > 0 && (
+                    <motion.span
+                      key={itemCount}
+                      initial={{ scale: 0.4, opacity: 0 }}
+                      animate={{ scale: [0.4, 1.25, 1], opacity: 1 }}
+                      transition={{ duration: 0.35, ease: "easeOut" }}
+                      className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-amber-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center pointer-events-none"
+                    >
+                      {itemCount > 9 ? '9+' : itemCount}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
               </div>
               <span className="text-xs font-medium text-gray-600 mt-1.5">Cart</span>
             </button>
@@ -236,11 +246,19 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             >
               <div className="relative">
                 <Heart className="h-4 w-4 text-gray-600" />
-                {wishlistItems.length > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                    {wishlistItems.length > 9 ? '9+' : wishlistItems.length}
-                  </span>
-                )}
+                <AnimatePresence mode="popLayout">
+                  {wishlistItems.length > 0 && (
+                    <motion.span
+                      key={wishlistItems.length}
+                      initial={{ scale: 0.4, opacity: 0 }}
+                      animate={{ scale: [0.4, 1.25, 1], opacity: 1 }}
+                      transition={{ duration: 0.35, ease: "easeOut" }}
+                      className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center pointer-events-none"
+                    >
+                      {wishlistItems.length > 9 ? '9+' : wishlistItems.length}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
               </div>
               <span className="text-xs font-medium text-gray-600 mt-1.5">Wishlist</span>
             </Link>

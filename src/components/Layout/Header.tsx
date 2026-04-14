@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, ShoppingCart, User, Heart, ChevronDown, LogOut, Leaf, ArrowRight, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -295,11 +297,19 @@ export const Header: React.FC<HeaderProps> = ({ onAuthClick, onCartClick }) => {
             aria-label="Wishlist"
           >
             <Heart className="h-5 w-5" />
-            {wishlistItems.length > 0 && (
-              <span className="absolute top-1 right-1 h-3.5 w-3.5 bg-gray-900 text-white text-[8px] font-black rounded-full flex items-center justify-center leading-none">
-                {wishlistItems.length > 9 ? '9+' : wishlistItems.length}
-              </span>
-            )}
+            <AnimatePresence mode="popLayout">
+              {wishlistItems.length > 0 && (
+                <motion.span
+                  key={wishlistItems.length}
+                  initial={{ scale: 0.4, opacity: 0 }}
+                  animate={{ scale: [0.4, 1.25, 1], opacity: 1 }}
+                  transition={{ duration: 0.35, ease: "easeOut" }}
+                  className="absolute top-1 right-1 h-3.5 w-3.5 bg-gray-900 text-white text-[8px] font-black rounded-full flex items-center justify-center leading-none pointer-events-none"
+                >
+                  {wishlistItems.length > 9 ? '9+' : wishlistItems.length}
+                </motion.span>
+              )}
+            </AnimatePresence>
           </Link>
 
           <div className="relative hidden sm:block" ref={userMenuRef}>
@@ -340,11 +350,19 @@ export const Header: React.FC<HeaderProps> = ({ onAuthClick, onCartClick }) => {
             aria-label="Cart"
           >
             <ShoppingCart className="h-5 w-5" />
-            {itemCount > 0 && (
-              <span className="absolute top-1 right-1 h-4 w-4 bg-gray-900 text-white text-[9px] font-black rounded-full flex items-center justify-center leading-none">
-                {itemCount > 9 ? '9+' : itemCount}
-              </span>
-            )}
+            <AnimatePresence mode="popLayout">
+              {itemCount > 0 && (
+                <motion.span
+                  key={itemCount}
+                  initial={{ scale: 0.4, opacity: 0 }}
+                  animate={{ scale: [0.4, 1.3, 1], opacity: 1 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  className="absolute top-1 right-1 h-4 w-4 bg-gray-900 text-white text-[9px] font-black rounded-full flex items-center justify-center leading-none pointer-events-none"
+                >
+                  {itemCount > 9 ? '9+' : itemCount}
+                </motion.span>
+              )}
+            </AnimatePresence>
           </button>
         </div>
       </div>

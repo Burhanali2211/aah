@@ -65,7 +65,7 @@ export const useShoppingCart = (user: any, showNotification: any) => {
 
   const addItem = useCallback(async (product: Product, quantity: number = 1, variantId?: string) => {
     if (!user) {
-      showNotification({ type: 'info', title: 'Authentication Required', message: 'Please log in to add items to your cart.' });
+      showNotification({ type: 'info', title: '', message: 'Please log in to continue' });
       return;
     }
     try {
@@ -73,7 +73,7 @@ export const useShoppingCart = (user: any, showNotification: any) => {
       if (existingItem && existingItem.id) await db.updateCartItem(existingItem.id, existingItem.quantity + quantity);
       else await db.addToCart(user.id, product.id, quantity);
       await fetchCart();
-      showNotification({ type: 'success', title: 'Added to Cart', message: `${product.name} added to cart.` });
+      showNotification({ type: 'success', title: '', message: 'Item added to cart' });
     } catch (error) {
       console.error('Error adding to cart:', error);
       showNotification({ type: 'error', title: 'Error', message: 'Failed to add to cart' });
@@ -106,7 +106,7 @@ export const useShoppingCart = (user: any, showNotification: any) => {
         saveGuestCart(updatedCart);
         setCartItems(updatedCart);
       }
-      showNotification({ type: 'info', title: 'Removed', message: 'Item removed from cart.' });
+      showNotification({ type: 'info', title: '', message: 'Item removed from cart' });
     } catch (error) {
       console.error('Error removing from cart:', error);
       showNotification({ type: 'error', title: 'Error', message: 'Failed to remove from cart' });

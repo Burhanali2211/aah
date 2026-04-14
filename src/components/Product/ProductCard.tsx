@@ -90,10 +90,7 @@ export const ProductCard: React.FC<ProductCardProps> = memo(({
         <div className="flex flex-col flex-1 min-w-0 justify-between">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-green-50 text-green-800">
-                {typeof product.category === 'string' ? product.category : 'Discovery'}
-              </span>
-              <div className="flex items-center text-amber-400 ml-auto">
+              <div className="flex items-center text-amber-400">
                 <Star className="h-3.5 w-3.5 fill-current" />
                 <span className="text-sm font-bold text-gray-700 ml-1">{product.rating.toFixed(1)}</span>
               </div>
@@ -187,62 +184,56 @@ export const ProductCard: React.FC<ProductCardProps> = memo(({
 
         {/* Badges */}
         <div className="absolute top-2 left-2 flex flex-col gap-1.5 z-10">
-          {variant === 'best-seller' && rank && rank <= 5 && (
-            <div className={`w-10 h-10 flex items-center justify-center font-black text-lg rounded-xl shadow-lg ${
-              rank === 1 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-white' : 'bg-gray-800 text-white'
-            }`}>
-              #{rank}
-            </div>
-          )}
-          
           {discount > 0 && (
-            <span className="bg-red-600 text-white text-[10px] sm:text-xs font-black px-2 py-1 rounded-lg shadow-lg">
+            <span className="bg-red-500/90 backdrop-blur-sm text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">
               -{discount}%
-            </span>
-          )}
-
-          {product.featured && (
-            <span className="bg-white/90 backdrop-blur-md text-gray-900 text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-sm border border-gray-100 flex items-center gap-1">
-              <Flame className="h-3 w-3 text-orange-500" /> Best Seller
             </span>
           )}
         </div>
 
-        <button
-          onClick={handleWishlistToggle}
-          className={`absolute top-2 right-2 p-2 rounded-xl backdrop-blur-md shadow-lg transition-all duration-300 hover:scale-110 z-10 ${
-            isInWishlist(product.id) ? 'bg-red-500 text-white' : 'bg-white/80 text-gray-600 hover:bg-white'
-          }`}
-        >
-          <Heart className={`h-3.5 w-3.5 ${isInWishlist(product.id) ? 'fill-current' : ''}`} />
-        </button>
-      </div>
+        </div>
 
       {/* Content */}
       <div className={`flex flex-col p-2 sm:p-4 gap-1 sm:gap-1.5 ${variant === 'luxury' ? 'bg-amber-50/30' : ''}`}>
-        <div className="flex items-center justify-between mb-0.5">
-          <span className="text-[9px] font-bold text-green-600 uppercase tracking-wider line-clamp-1">{product.category}</span>
-          <div className="flex items-center bg-gray-100/50 px-1.5 py-0.5 rounded-md">
+        <div className="flex items-start justify-between gap-2">
+          <Link to={`/products/${product.id}`} className="flex-1 min-w-0">
+            <h3 className="font-bold text-gray-900 text-[13px] sm:text-base leading-tight line-clamp-1 sm:line-clamp-2 sm:min-h-[2.5rem] group-hover:text-green-700 transition-colors">
+              {product.name}
+            </h3>
+          </Link>
+          
+          <div className="flex items-center bg-gray-100/50 px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0">
             <Star className="h-2.5 w-2.5 text-amber-500 fill-current" />
             <span className="ml-1 text-[10px] font-bold text-gray-700">{product.rating.toFixed(1)}</span>
           </div>
         </div>
 
-        <Link to={`/products/${product.id}`} className="mb-0.5">
-          <h3 className="font-bold text-gray-900 text-[13px] sm:text-base leading-tight line-clamp-1 sm:line-clamp-2 sm:min-h-[2.5rem] group-hover:text-green-700 transition-colors">
-            {product.name}
-          </h3>
-        </Link>
-
-        <div className="flex items-baseline gap-1 mb-1">
-          <span className={`font-black ${variant === 'luxury' ? 'text-amber-900' : 'text-gray-900'} text-base sm:text-xl`}>
-            ₹{product.price.toLocaleString('en-IN')}
-          </span>
-          {discount > 0 && (
-            <span className="text-[10px] text-gray-400 line-through">₹{product.originalPrice?.toLocaleString('en-IN')}</span>
-          )}
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-baseline gap-1">
+            <span className={`font-black ${variant === 'luxury' ? 'text-amber-900' : 'text-gray-900'} text-base sm:text-xl`}>
+              ₹{product.price.toLocaleString('en-IN')}
+            </span>
+            {discount > 0 && (
+              <span className="text-[10px] text-gray-400 line-through">₹{product.originalPrice?.toLocaleString('en-IN')}</span>
+            )}
+          </div>
+          
+          <button
+            onClick={handleWishlistToggle}
+            className={`transition-all duration-300 py-1 ${
+              isInWishlist(product.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
+            }`}
+          >
+            <Heart className={`h-5 w-5 ${isInWishlist(product.id) ? 'fill-current' : ''}`} />
+          </button>
         </div>
 
+        {/* Buy Now (Visible only in featured/luxury or hover) */}
+        <BuyNowButton
+          onClick={handleAddToCart}
+          disabled={product.stock === 0}
+          className="mt-0"
+        />
       </div>
     </motion.div>
   );

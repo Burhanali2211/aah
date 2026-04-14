@@ -31,7 +31,7 @@ export const useShoppingWishlist = (user: any, showNotification: any) => {
 
   const addToWishlist = async (product: Product) => {
     if (!user) {
-      showNotification({ type: 'info', title: 'Authentication Required', message: 'Please log in to add items to your wishlist.' });
+      showNotification({ type: 'info', title: '', message: 'Please log in to continue' });
       return;
     }
     if (isInWishlist(product.id)) {
@@ -41,7 +41,7 @@ export const useShoppingWishlist = (user: any, showNotification: any) => {
         const { error } = await supabase.from('wishlist_items').insert([{ user_id: user.id, product_id: product.id }]);
         if (error) throw error;
         await fetchWishlist();
-        showNotification({ type: 'success', title: 'Added to Wishlist', message: `${product.name} added to your wishlist.` });
+        showNotification({ type: 'success', title: '', message: 'Item added to wishlist' });
       } catch (error) {
         console.error('Error adding to wishlist:', error);
         showNotification({ type: 'error', title: 'Error', message: 'Failed to add item to wishlist.' });
@@ -55,7 +55,7 @@ export const useShoppingWishlist = (user: any, showNotification: any) => {
       const { error } = await supabase.from('wishlist_items').delete().eq('user_id', user.id).eq('product_id', productId);
       if (error) throw error;
       await fetchWishlist();
-      showNotification({ type: 'info', title: 'Removed', message: 'Item removed from your wishlist.' });
+      showNotification({ type: 'info', title: '', message: 'Item removed from wishlist' });
     } catch (error) {
       console.error('Error removing from wishlist:', error);
       showNotification({ type: 'error', title: 'Error', message: 'Failed to remove item.' });

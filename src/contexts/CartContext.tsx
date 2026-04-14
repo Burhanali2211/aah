@@ -144,7 +144,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         saveGuestCart(updatedCart);
         setItems(updatedCart);
       }
-      showNotification({ type: 'success', title: 'Added to Cart', message: `${product.name} added to cart.` });
+      showNotification({ type: 'success', title: '', message: 'Item added to cart' });
     } catch (error) {
       console.error('Error adding to cart:', error);
       showNotification({ type: 'error', title: 'Error', message: 'Failed to add to cart' });
@@ -181,7 +181,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         saveGuestCart(updatedCart);
         setItems(updatedCart);
       }
-      showNotification({ type: 'info', title: 'Removed', message: 'Item removed from cart.' });
+      showNotification({ type: 'info', title: '', message: 'Item removed from cart' });
     } catch (error) {
       console.error('Error removing from cart:', error);
       showNotification({ type: 'error', title: 'Error', message: 'Failed to remove from cart' });

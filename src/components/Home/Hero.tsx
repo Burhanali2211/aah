@@ -1,6 +1,78 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const MotionLink = motion(Link);
+
+const WaterButton: React.FC<{ to: string, text: string }> = ({ to, text }) => {
+  const [ripples, setRipples] = useState<{ x: number, y: number, id: number }[]>([]);
+
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const id = Date.now();
+    setRipples(prev => [...prev, { x, y, id }]);
+    setTimeout(() => {
+      setRipples(prev => prev.filter(r => r.id !== id));
+    }, 1000);
+  };
+
+  return (
+    <MotionLink
+      to={to}
+      onClick={handleClick}
+      whileHover={{ 
+        scale: 1.05, 
+        y: -3,
+        transition: { type: "spring", stiffness: 400, damping: 10 }
+      }}
+      whileTap={{ 
+        scale: 0.96,
+        y: 1,
+        transition: { type: "spring", stiffness: 400, damping: 10 }
+      }}
+      style={{
+        boxShadow: 'inset 4px 4px 6px rgba(255, 255, 255, 0.4), inset -4px -4px 6px rgba(0, 0, 0, 0.1), 0 10px 20px rgba(0, 0, 0, 0.2)',
+      }}
+      className="inline-flex items-center gap-2 mt-6 bg-white/10 hover:bg-white/25 backdrop-blur-xl text-white border border-white/30 hover:border-white/60 text-xs sm:text-sm font-bold px-8 sm:px-10 py-3 sm:py-3.5 rounded-full transition-all duration-300 shadow-lg group relative overflow-hidden"
+    >
+      <span className="relative z-10 uppercase tracking-wider">{text}</span>
+      <ChevronRight className="h-4 w-4 relative z-10 transition-transform duration-300 group-hover:translate-x-1" />
+      
+      {/* Refraction Highlights */}
+      <span className="absolute top-1.5 left-6 w-5 h-2 bg-white/30 rounded-full blur-[1px] rotate-[-5deg] pointer-events-none" />
+      
+      {/* Ripple Elements */}
+      <AnimatePresence>
+        {ripples.map(ripple => (
+          <motion.span
+            key={ripple.id}
+            initial={{ scale: 0, opacity: 0.8 }}
+            animate={{ scale: 15, opacity: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            style={{
+              position: 'absolute',
+              left: ripple.x,
+              top: ripple.y,
+              width: 20,
+              height: 20,
+              marginLeft: -10,
+              marginTop: -10,
+              backgroundColor: 'rgba(255, 255, 255, 0.4)',
+              borderRadius: '50%',
+              pointerEvents: 'none',
+              zIndex: 5,
+              filter: 'blur(4px)'
+            }}
+          />
+        ))}
+      </AnimatePresence>
+    </MotionLink>
+  );
+};
 
 const slides = [
   {
@@ -9,7 +81,6 @@ const slides = [
     subtitle: 'Traditional Excellence in Every Drop',
     cta: 'Explore Collection',
     ctaLink: '/products',
-    accent: 'from-amber-900/60 to-transparent',
   },
   {
     image: '/images/hero/hero2.jpg',
@@ -17,7 +88,6 @@ const slides = [
     subtitle: 'Discover Your Unique Fragrance',
     cta: 'Shop Now',
     ctaLink: '/products',
-    accent: 'from-rose-900/60 to-transparent',
   },
   {
     image: '/images/hero/hero3.jpg',
@@ -25,7 +95,6 @@ const slides = [
     subtitle: 'Timeless Aromas from Aligarh',
     cta: 'View Heritage',
     ctaLink: '/products',
-    accent: 'from-emerald-900/60 to-transparent',
   },
   {
     image: '/images/hero/hero4.jpg',
@@ -33,7 +102,6 @@ const slides = [
     subtitle: "Nature's Finest Concentrated for You",
     cta: 'Discover Oils',
     ctaLink: '/products',
-    accent: 'from-blue-900/60 to-transparent',
   },
   {
     image: '/images/hero/hero5.jpg',
@@ -41,7 +109,6 @@ const slides = [
     subtitle: 'Reinventing Ancient Traditions',
     cta: 'Shop Oudh',
     ctaLink: '/products',
-    accent: 'from-stone-900/60 to-transparent',
   },
   {
     image: '/images/hero/hero6.jpg',
@@ -49,7 +116,6 @@ const slides = [
     subtitle: 'The Freshness of Handpicked Blooms',
     cta: 'Shop Florals',
     ctaLink: '/products',
-    accent: 'from-pink-900/60 to-transparent',
   },
   {
     image: '/images/hero/hero7.jpg',
@@ -57,13 +123,17 @@ const slides = [
     subtitle: 'Experience Excellence and Elegance',
     cta: 'View Blends',
     ctaLink: '/products',
-    accent: 'from-purple-900/60 to-transparent',
   },
 ];
 
 export const Hero: React.FC = () => {
   const [current, setCurrent] = useState(0);
   const [transitioning, setTransitioning] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   const goTo = useCallback((index: number) => {
     if (transitioning || index === current) return;
@@ -86,37 +156,55 @@ export const Hero: React.FC = () => {
         {slides.map((slide, i) => (
           <div
             key={i}
-            className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${i === current ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+            className={`absolute inset-0 ${
+              hasMounted ? 'transition-opacity duration-700 ease-in-out' : ''
+            } ${i === current ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
             aria-hidden={i !== current}
           >
             <img
               src={slide.image}
               alt={slide.title}
               loading={i === 0 ? 'eager' : 'lazy'}
-              className={`w-full h-full object-cover transition-transform duration-[4000ms] ease-out ${i === current ? 'scale-105' : 'scale-100'}`}
+              className={`w-full h-full object-cover ${
+                hasMounted ? 'transition-transform duration-[4000ms] ease-out' : ''
+              } ${i === current ? 'scale-105' : 'scale-100'}`}
             />
-            {/* Gradient overlay */}
-            <div className={`absolute inset-0 bg-gradient-to-r ${slide.accent} mix-blend-multiply opacity-60`} />
-            <div className="absolute inset-0 bg-black/20" />
+            {/* Softer, more modern overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-80" />
 
-            {/* Content Container - Full width */}
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full px-4 sm:px-6 lg:px-8">
-                <div className="max-w-2xl">
-                  <div className={`transition-all duration-700 delay-300 transform ${i === current ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
-                    <p className="text-white/90 text-xs sm:text-sm md:text-base font-medium tracking-widest uppercase mb-2">
+            {/* Content Container - Centered & Calm */}
+            <div className="absolute inset-0 flex items-center justify-center text-center">
+              <div className="max-w-4xl px-6">
+                <div className="space-y-4">
+                  {/* Subtitle - Softer appearance */}
+                  <div className={`transition-all duration-1000 transform ${
+                    !hasMounted && i === current 
+                      ? 'translate-y-0 opacity-100' 
+                      : i === current ? 'translate-y-0 opacity-100 delay-300' : 'translate-y-4 opacity-0'
+                  }`}>
+                    <p className="text-white/80 text-[10px] sm:text-xs md:text-sm font-semibold tracking-[0.2em] uppercase italic">
                       {slide.subtitle}
                     </p>
-                    <h2 className="text-white text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold leading-[1.1] mb-4 sm:mb-6 drop-shadow-lg">
+                  </div>
+
+                  {/* Title - More balanced sizing */}
+                  <div className={`transition-all duration-1000 transform ${
+                    !hasMounted && i === current 
+                      ? 'translate-y-0 opacity-100' 
+                      : i === current ? 'translate-y-0 opacity-100 delay-500' : 'translate-y-4 opacity-0'
+                  }`}>
+                    <h2 className="text-white text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-medium leading-tight tracking-tight drop-shadow-sm">
                       {slide.title}
                     </h2>
-                    <Link
-                      to={slide.ctaLink}
-                      className="inline-flex items-center gap-2 bg-white text-stone-900 hover:bg-stone-100 text-xs sm:text-sm md:text-base font-bold px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg transition-all shadow-xl hover:scale-105 active:scale-95"
-                    >
-                      {slide.cta}
-                      <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    </Link>
+                  </div>
+
+                  {/* Button - Water Click Experience with better hierarchy */}
+                  <div className={`transition-all duration-1000 transform ${
+                    !hasMounted && i === current 
+                      ? 'translate-y-0 opacity-100' 
+                      : i === current ? 'translate-y-0 opacity-100 delay-700' : 'translate-y-4 opacity-0'
+                  }`}>
+                    <WaterButton to={slide.ctaLink} text={slide.cta} />
                   </div>
                 </div>
               </div>
@@ -125,7 +213,7 @@ export const Hero: React.FC = () => {
         ))}
       </div>
 
-      {/* Navigation Arrows - Contained within max-w-7xl boundary for better desktop feel */}
+      {/* Navigation Arrows */}
       <div className="absolute inset-0 pointer-events-none z-20 hidden md:block">
         <div className="max-w-[1440px] mx-auto h-full relative px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           <button 
