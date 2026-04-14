@@ -4,6 +4,7 @@ import { User, AuthContextType, Product } from '../types';
 import { supabase } from '../lib/supabase';
 import { SecurityManager } from '../utils/auth/security';
 import AuthModal from '../components/Auth/AuthModal';
+import { clearRecoveryFlag } from '../utils/recovery';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -141,7 +142,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
         
         console.log('[AUTH] Initialization complete.');
-        sessionStorage.removeItem('sb_recovery_active');
+        clearRecoveryFlag();
       } catch (error) {
         console.error('[AUTH] Initialization failed:', error);
         setUser(null);

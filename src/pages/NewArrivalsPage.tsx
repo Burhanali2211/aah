@@ -1,15 +1,12 @@
 import React from 'react';
-import { useProducts } from '../contexts/ProductContext';
+import { useProductsQuery } from '../hooks/useProductQueries';
 import { ProductCard } from '../components/Product/ProductCard';
 import { ProductListSkeleton } from '../components/Common/SkeletonScreens';
 import { Clock } from 'lucide-react';
 
 export const NewArrivalsPage: React.FC = () => {
-  const { products, loading } = useProducts();
-
-  const newArrivals = [...products]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 20); // Get top 20 new arrivals
+  const { data, isLoading: loading } = useProductsQuery(1, 20, { sortBy: 'newest' });
+  const newArrivals = data?.products || [];
 
   return (
     <div className="min-h-screen bg-gray-50">

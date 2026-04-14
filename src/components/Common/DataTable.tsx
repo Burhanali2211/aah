@@ -1,76 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 
-// Check if we're in admin context by checking the pathname
-const isAdminRoute = () => {
-  if (typeof window === 'undefined') return false;
-  return window.location.pathname.startsWith('/admin');
-};
-
-// Component to load admin settings
-const AdminSettingsLoader: React.FC<{ onSettingsLoad: (settings: any) => void }> = ({ onSettingsLoad }) => {
-  const onSettingsLoadRef = React.useRef(onSettingsLoad);
-  const lastSettingsRef = React.useRef<string | null>(null);
-  
-  // Keep ref updated
-  React.useEffect(() => {
-    onSettingsLoadRef.current = onSettingsLoad;
-  }, [onSettingsLoad]);
-  
-  // Poll localStorage for settings updates
-  useEffect(() => {
-    if (!isAdminRoute()) return;
-    
-    const loadFromCache = () => {
-      try {
-        const cached = localStorage.getItem('admin_dashboard_settings');
-        if (cached) {
-          // Only update if settings actually changed
-          if (cached !== lastSettingsRef.current) {
-            lastSettingsRef.current = cached;
-            const parsed = JSON.parse(cached);
-            if (parsed.settings) {
-              onSettingsLoadRef.current(parsed.settings);
-            }
-          }
-        }
-      } catch (error) {
-        // Ignore
-      }
-    };
-    
-    // Load once immediately
-    loadFromCache();
-    
-    // Then poll every 2 seconds (reduced frequency)
-    const interval = setInterval(loadFromCache, 2000);
-    return () => clearInterval(interval);
-  }, []); // Empty dependency array - only run once
-  
-  return null;
-};
-
-// Safe hook to get admin dashboard settings
-const useAdminSettings = () => {
-  const [settings, setSettings] = React.useState<any>(null);
-  const [isAdmin, setIsAdmin] = React.useState(false);
-  
-  useEffect(() => {
-    setIsAdmin(isAdminRoute());
-  }, []);
-  
-  // Memoize the settings loader to prevent recreating on every render
-  const SettingsLoader = React.useMemo(() => {
-    return () => <AdminSettingsLoader onSettingsLoad={setSettings} />;
-  }, []);
-  
-  return { 
-    settings, 
-    isAdminContext: isAdmin,
-    SettingsLoader
-  };
-};
-
 export interface Column<T> {
   key: string;
   label: string;
@@ -92,6 +22,8 @@ interface DataTableProps<T> {
     onPageChange: (page: number) => void;
   };
   emptyMessage?: string;
+  variant?: 'customer' | 'admin';
+  adminSettings?: any;
 }
 
 export function DataTable<T extends { id: string | number }>({
@@ -100,13 +32,14 @@ export function DataTable<T extends { id: string | number }>({
   loading = false,
   onRowClick,
   pagination,
-  emptyMessage = 'No data available'
+  emptyMessage = 'No data available',
+  variant = 'customer',
+  adminSettings
 }: DataTableProps<T>) {
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   
-  // Get admin settings if in admin context
-  const { settings, isAdminContext, SettingsLoader } = useAdminSettings();
+  const isAdmin = variant === 'admin';
 
   const handleSort = (columnKey: string) => {
     if (sortColumn === columnKey) {
@@ -132,12 +65,12 @@ export function DataTable<T extends { id: string | number }>({
   }, [data, sortColumn, sortDirection]);
 
   const renderSortIcon = (columnKey: string) => {
-    const iconColor = isAdminContext && settings 
-      ? settings.primary_color_from 
+    const iconColor = isAdmin && adminSettings 
+      ? adminSettings.primary_color_from 
       : '#d97706';
     
     if (sortColumn !== columnKey) {
-      return <ChevronsUpDown className="h-4 w-4" style={{ color: isAdminContext ? 'rgba(255, 255, 255, 0.4)' : '#9ca3af' }} />;
+      return <ChevronsUpDown className="h-4 w-4" style={{ color: isAdmin ? 'rgba(255, 255, 255, 0.4)' : '#9ca3af' }} />;
     }
     return sortDirection === 'asc' ? (
       <ChevronUp className="h-4 w-4" style={{ color: iconColor }} />
@@ -149,18 +82,18 @@ export function DataTable<T extends { id: string | number }>({
   if (loading) {
     return (
       <div 
-        className={`rounded-2xl border overflow-hidden ${isAdminContext 
+        className={`rounded-2xl border overflow-hidden ${isAdmin 
           ? 'bg-white/5 backdrop-blur-sm border-white/10' 
           : 'bg-white shadow-sm border-gray-200'}`}
       >
         <div className="overflow-x-auto">
-          <table className={`min-w-full ${isAdminContext ? 'divide-y divide-white/10' : 'divide-y divide-gray-200'}`}>
-            <thead className={isAdminContext ? 'bg-white/5' : 'bg-gray-50'}>
+          <table className={`min-w-full ${isAdmin ? 'divide-y divide-white/10' : 'divide-y divide-gray-200'}`}>
+            <thead className={isAdmin ? 'bg-white/5' : 'bg-gray-50'}>
               <tr>
                 {columns.map((column) => (
                   <th
                     key={column.key}
-                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isAdminContext 
+                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isAdmin 
                       ? 'text-white/60' 
                       : 'text-gray-500'}`}
                     style={{ width: column.width }}
@@ -170,12 +103,12 @@ export function DataTable<T extends { id: string | number }>({
                 ))}
               </tr>
             </thead>
-            <tbody className={isAdminContext ? 'bg-white/5 divide-y divide-white/10' : 'bg-white divide-y divide-gray-200'}>
+            <tbody className={isAdmin ? 'bg-white/5 divide-y divide-white/10' : 'bg-white divide-y divide-gray-200'}>
               {[...Array(5)].map((_, index) => (
                 <tr key={index}>
                   {columns.map((column) => (
                     <td key={column.key} className="px-6 py-4 whitespace-nowrap">
-                      <div className={`h-4 rounded animate-pulse ${isAdminContext ? 'bg-white/10' : 'bg-gray-200'}`}></div>
+                      <div className={`h-4 rounded animate-pulse ${isAdmin ? 'bg-white/10' : 'bg-gray-200'}`}></div>
                     </td>
                   ))}
                 </tr>
@@ -190,32 +123,31 @@ export function DataTable<T extends { id: string | number }>({
   if (data.length === 0) {
     return (
       <div 
-        className={`rounded-2xl border p-12 text-center ${isAdminContext 
+        className={`rounded-2xl border p-12 text-center ${isAdmin 
           ? 'bg-white/5 backdrop-blur-sm border-white/10' 
           : 'bg-white shadow-sm border-gray-200'}`}
       >
-        <p className={isAdminContext ? 'text-white/60' : 'text-gray-500'}>{emptyMessage}</p>
+        <p className={isAdmin ? 'text-white/60' : 'text-gray-500'}>{emptyMessage}</p>
       </div>
     );
   }
 
   return (
     <>
-      {isAdminContext && SettingsLoader && <SettingsLoader />}
       <div 
-        className={`rounded-2xl border overflow-hidden ${isAdminContext 
+        className={`rounded-2xl border overflow-hidden ${isAdmin 
           ? 'bg-white/5 backdrop-blur-sm border-white/10' 
           : 'bg-white shadow-sm border-gray-200'}`}
       >
       {/* Mobile-friendly horizontal scroll with sticky first column */}
       <div className="overflow-x-auto">
-        <table className={`min-w-full ${isAdminContext ? 'divide-y divide-white/10' : 'divide-y divide-gray-200'}`}>
-          <thead className={`sticky top-0 z-10 ${isAdminContext ? 'bg-white/5' : 'bg-gray-50'}`}>
+        <table className={`min-w-full ${isAdmin ? 'divide-y divide-white/10' : 'divide-y divide-gray-200'}`}>
+          <thead className={`sticky top-0 z-10 ${isAdmin ? 'bg-white/5' : 'bg-gray-50'}`}>
             <tr>
               {columns.map((column, index) => (
                 <th
                   key={column.key}
-                  className={`px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium uppercase tracking-wider ${isAdminContext 
+                  className={`px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium uppercase tracking-wider ${isAdmin 
                     ? `text-white/60 ${column.sortable ? 'cursor-pointer select-none hover:bg-white/10 active:bg-white/15' : ''} ${index === 0 ? 'sticky left-0 bg-white/5 z-20' : ''}`
                     : `text-gray-500 ${column.sortable ? 'cursor-pointer select-none hover:bg-gray-100 active:bg-gray-200' : ''} ${index === 0 ? 'sticky left-0 bg-gray-50 z-20' : ''}`}`}
                   style={{ width: column.width }}
@@ -229,12 +161,12 @@ export function DataTable<T extends { id: string | number }>({
               ))}
             </tr>
           </thead>
-          <tbody className={isAdminContext ? 'bg-white/5 divide-y divide-white/10' : 'bg-white divide-y divide-gray-200'}>
+          <tbody className={isAdmin ? 'bg-white/5 divide-y divide-white/10' : 'bg-white divide-y divide-gray-200'}>
             {sortedData.map((item) => (
               <tr
                 key={item.id}
                 className={`${onRowClick
-                  ? isAdminContext 
+                  ? isAdmin 
                     ? 'cursor-pointer hover:bg-white/5 active:bg-white/10 transition-colors'
                     : 'cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors'
                   : ''
@@ -244,7 +176,7 @@ export function DataTable<T extends { id: string | number }>({
                 {columns.map((column, index) => (
                   <td
                     key={column.key}
-                    className={`px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm ${isAdminContext 
+                    className={`px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm ${isAdmin 
                       ? `text-white ${index === 0 ? 'sticky left-0 bg-white/5 z-10' : ''}`
                       : `text-gray-900 ${index === 0 ? 'sticky left-0 bg-white z-10' : ''}`}`}
                   >
@@ -262,17 +194,17 @@ export function DataTable<T extends { id: string | number }>({
       {/* Pagination */}
       {pagination && (
         <div 
-          className={`px-3 sm:px-6 py-3 sm:py-4 border-t flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 ${isAdminContext 
+          className={`px-3 sm:px-6 py-3 sm:py-4 border-t flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 ${isAdmin 
             ? 'bg-white/5 border-white/10' 
             : 'bg-gray-50 border-gray-200'}`}
         >
-          <div className={`text-xs sm:text-sm order-2 sm:order-1 ${isAdminContext ? 'text-white/60' : 'text-gray-700'}`}>
+          <div className={`text-xs sm:text-sm order-2 sm:order-1 ${isAdmin ? 'text-white/60' : 'text-gray-700'}`}>
             <span className="hidden sm:inline">Showing </span>
             <span className="font-medium">
               {(pagination.currentPage - 1) * pagination.pageSize + 1}
             </span>
             <span className="hidden sm:inline"> to </span>
-            <span className={`hidden sm:inline ${isAdminContext ? 'text-white/60' : 'text-gray-700'}`}>-</span>
+            <span className={`hidden sm:inline ${isAdmin ? 'text-white/60' : 'text-gray-700'}`}>-</span>
             <span className="font-medium">
               {Math.min(
                 pagination.currentPage * pagination.pageSize,
@@ -287,7 +219,7 @@ export function DataTable<T extends { id: string | number }>({
             <button
               onClick={() => pagination.onPageChange(pagination.currentPage - 1)}
               disabled={pagination.currentPage === 1}
-              className={`p-2 rounded-lg border transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed ${isAdminContext 
+              className={`p-2 rounded-lg border transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed ${isAdmin 
                 ? 'bg-white/5 hover:bg-white/10 border-white/10 text-white' 
                 : 'border-gray-300 hover:bg-gray-100 active:bg-gray-200'}`}
               aria-label="Previous page"
@@ -311,15 +243,15 @@ export function DataTable<T extends { id: string | number }>({
                       key={page}
                       onClick={() => pagination.onPageChange(page)}
                       className={`px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm font-medium transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center ${isActive
-                        ? isAdminContext && settings
+                        ? isAdmin && adminSettings
                           ? 'text-white'
                           : 'bg-amber-600 text-white'
-                        : isAdminContext
+                        : isAdmin
                           ? 'text-white/60 hover:bg-white/10 active:bg-white/15'
                           : 'text-gray-700 hover:bg-gray-100 active:bg-gray-200'
                         }`}
-                      style={isActive && isAdminContext && settings ? {
-                        background: `linear-gradient(to right, ${settings.primary_color_from}, ${settings.primary_color_to})`
+                      style={isActive && isAdmin && adminSettings ? {
+                        background: `linear-gradient(to right, ${adminSettings.primary_color_from}, ${adminSettings.primary_color_to})`
                       } : undefined}
                     >
                       {page}
@@ -330,7 +262,7 @@ export function DataTable<T extends { id: string | number }>({
                   page === pagination.currentPage + 2
                 ) {
                   return (
-                    <span key={page} className={`px-2 ${isAdminContext ? 'text-white/40' : 'text-gray-400'}`}>
+                    <span key={page} className={`px-2 ${isAdmin ? 'text-white/40' : 'text-gray-400'}`}>
                       ...
                     </span>
                   );
@@ -342,7 +274,7 @@ export function DataTable<T extends { id: string | number }>({
             <button
               onClick={() => pagination.onPageChange(pagination.currentPage + 1)}
               disabled={pagination.currentPage === pagination.totalPages}
-              className={`p-2 rounded-lg border transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed ${isAdminContext 
+              className={`p-2 rounded-lg border transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed ${isAdmin 
                 ? 'bg-white/5 hover:bg-white/10 border-white/10 text-white' 
                 : 'border-gray-300 hover:bg-gray-100 active:bg-gray-200'}`}
               aria-label="Next page"

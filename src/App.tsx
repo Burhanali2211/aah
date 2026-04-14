@@ -1,14 +1,13 @@
 import React, { Suspense, useEffect, lazy, memo } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import './styles/pwa-responsive.css';
+// import './styles/pwa-responsive.css'; // Removed as redundant
 import { CombinedProvider } from '@/contexts/CombinedProvider';
 import { Layout } from '@/components/Layout/Layout';
 import { ErrorBoundary } from '@/components/Common/ErrorBoundary';
 import { ScrollToTop } from '@/components/Common/ScrollToTop';
 import { PageLoader } from '@/components/Common/UniversalLoader';
 import { GlobalMediaErrorHandler } from '@/components/Common/MediaErrorHandler';
-import { ProfessionalLoader } from '@/components/Common/ProfessionalLoader';
-import { usePageTracking } from '@/hooks/usePageTracking';
+import { usePageTracking } from '@/hooks';
 import { ProtectedRoute } from '@/components/Common/ProtectedRoute';
 import { PublicRoute } from '@/components/Common/PublicRoute';
 import { MetaManager } from '@/components/Common/MetaManager';
@@ -41,7 +40,7 @@ const DashboardPage = React.lazy(() =>
   import('@/pages/DashboardPage').then(module => ({ default: module.default }))
 );
 const CheckoutPage = React.lazy(() =>
-  import('./pages/ImprovedCheckoutPage.tsx').then(module => ({ default: module.default }))
+  import('@/pages/CheckoutPage').then(module => ({ default: module.default }))
 );
 const OrderTrackingPage = React.lazy(() =>
   import('@/pages/OrderTrackingPage').then(module => ({ default: module.default }))
@@ -50,17 +49,15 @@ const OrderConfirmationPage = React.lazy(() =>
   import('@/pages/OrderConfirmationPage').then(module => ({ default: module.default }))
 );
 const ProfileRedirect = React.lazy(() =>
-  import('@/components/Common/ProfileRedirect').then(module => ({ default: module.ProfileRedirect }))
+  import('@/pages/ProfileRedirect').then(module => ({ default: module.ProfileRedirect }))
 );
 
 
 
 // Universal optimized loading fallback component
 const PageLoadingFallback = memo(() => (
-  <ProfessionalLoader
-    fullPage={true}
+  <PageLoader
     text="Loading your experience..."
-    showBrand={false}
   />
 ));
 

@@ -18,25 +18,10 @@ export * from './Home';
 // Trust Components
 export * from './Trust';
 
-// Category Components
-export { CategoryDisplayCard } from './Category/CategoryDisplayCard';
+// Dashboard Components (Moved to src/pages/customer)
 
 // Cart Components
 export { CartSidebar } from './Cart/CartSidebar';
-
-// Address Components
-export { AddressForm } from './Address/AddressForm';
-export { AddressManagement } from './Address/AddressManagement';
-
-// Order Components
-export { OrderTracking } from './Order/OrderTracking';
-
-// Profile Components
-export { SimpleProfilePage } from './Profile/SimpleProfilePage';
-
-// Dashboard Components
-export { AdminDashboard } from './Admin/AdminDashboard';
-export { CustomerDashboard } from './Customer/CustomerDashboard';
 
 // Mobile Components
 export { MobileProductCard } from './Mobile/MobileProductCard';

@@ -15,7 +15,7 @@ export const mapDbCartItemToAppCartItem = (dbItem: any): CartItem => ({
 
 export const mapDbOrderToAppOrder = (dbOrder: any): Order => ({
   id: dbOrder.id,
-  orderNumber: dbOrder.order_number,
+  orderNumber: dbOrder.order_number || dbOrder.id.slice(0, 8).toUpperCase(),
   userId: dbOrder.user_id,
   items: (dbOrder.order_items || []).map((item: any) => ({
     id: item.id,

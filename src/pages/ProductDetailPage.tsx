@@ -5,36 +5,38 @@ import {
   MessageSquare, ShoppingCart, Check,
   ArrowRight, Package, TrendingUp, FileText, Star
 } from 'lucide-react';
-import { useProducts } from '../contexts/ProductContext';
+import { useProduct, useProductReviews, useSubmitReview, useCategories, useProductsQuery } from '../hooks/useProductQueries';
 import { useCart } from '../contexts/ShoppingContext';
 import { useWishlist } from '../contexts/ShoppingContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/AuthContext';
+import { PageLoader, UniversalLoader } from '../components/Common/UniversalLoader';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ProductReview } from '../components/Product/ProductReview';
 import { ReviewForm } from '../components/Product/ReviewForm';
 import { ProductRecommendations } from '../components/Product/ProductRecommendations';
 import { Modal } from '../components/Common/Modal';
 import { ProductDetailSkeleton } from '../components/Common/SkeletonScreens';
-import { Review, Product } from '../types';
-import { useCartButtonState } from '../hooks/useCartButtonState';
+import { Review, Product, Category } from '../types';
+import { useCartButtonState } from '../hooks';
 import { LuxuryGallery } from '../components/Product/LuxuryGallery';
 import { StockUrgency } from '../components/Trust';
 
 export const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { getProductById, fetchReviewsForProduct, submitReview } = useProducts();
+  
+  // Queries
+  const { data: product, isLoading: loading } = useProduct(id);
+  const { data: reviews = [], isLoading: reviewsLoading } = useProductReviews(product?.id);
+  const submitReviewMutation = useSubmitReview();
+  
   const { user } = useAuth();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
 
   const { addItem: addToCart } = useCart();
   const { addItem: addToWishlist, isInWishlist } = useWishlist();
   const { showNotification } = useNotification();
   const { showAuthModal } = useAuth();
 
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [reviewsLoading, setReviewsLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('description');
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
@@ -58,32 +60,6 @@ export const ProductDetailPage: React.FC = () => {
   };
 
   const cartButtonState = useCartButtonState(product || dummyProduct);
-
-  useEffect(() => {
-    const fetchProduct = async () => {
-      if (!id) return;
-      setLoading(true);
-      try {
-        const productData = await getProductById(id);
-        setProduct(productData || null);
-      } catch {
-        setProduct(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProduct();
-  }, [id, getProductById]);
-
-  useEffect(() => {
-    if (!product) return;
-    (async () => {
-      setReviewsLoading(true);
-      const r = await fetchReviewsForProduct(product.id);
-      setReviews(r);
-      setReviewsLoading(false);
-    })();
-  }, [product, fetchReviewsForProduct]);
 
   if (loading) return <div className="min-h-screen bg-stone-50 p-4 md:p-8"><ProductDetailSkeleton /></div>;
 
@@ -116,15 +92,24 @@ export const ProductDetailPage: React.FC = () => {
   const handleToggleWishlist = () => product && addToWishlist(product);
 
   const handleReviewSubmit = async (rating: number, comment: string) => {
-    if (!user) {
-      showNotification({ type: 'error', title: 'Login Required', message: 'Please login to leave a review.' });
+    if (!user || !product) {
+      showNotification({ type: 'error', title: 'Action Required', message: 'Please login to leave a review.' });
       return;
     }
-    await submitReview({ productId: product.id, userId: user.id, rating, comment });
-    const updatedReviews = await fetchReviewsForProduct(product.id);
-    setReviews(updatedReviews);
-    showNotification({ type: 'success', title: 'Review Submitted', message: 'Thank you for your feedback!' });
-    setIsReviewModalOpen(false);
+    
+    try {
+      await submitReviewMutation.mutateAsync({ 
+        productId: product.id, 
+        userId: user.id, 
+        rating, 
+        comment,
+        title: 'Review' 
+      });
+      showNotification({ type: 'success', title: 'Review Submitted', message: 'Thank you for your feedback!' });
+      setIsReviewModalOpen(false);
+    } catch (error) {
+      showNotification({ type: 'error', title: 'Submission Failed', message: 'Could not submit your review. Please try again.' });
+    }
   };
 
   const hasDiscount = product.originalPrice && product.originalPrice > product.price;
@@ -225,7 +210,7 @@ export const ProductDetailPage: React.FC = () => {
             {/* 6. Tags */}
             {product.tags && product.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
-                {product.tags.slice(0, 5).map((tag, i) => (
+                {product.tags.slice(0, 5).map((tag: string, i: number) => (
                   <span key={i} className="px-2.5 py-1 bg-stone-100 text-stone-600 rounded-full text-xs font-medium">
                     {tag}
                   </span>
@@ -359,9 +344,9 @@ export const ProductDetailPage: React.FC = () => {
                       Write a Review
                     </button>
                   </div>
-                  {reviewsLoading ? <ProfessionalLoader fullPage={false} text="Loading reviews..." /> : reviews.length > 0 ? (
+                  {reviewsLoading ? <UniversalLoader type="spinner" text="Loading reviews..." /> : reviews.length > 0 ? (
                     <div className="space-y-4">
-                      {reviews.map(review => <ProductReview key={review.id} review={review} />)}
+                      {reviews.map((review: Review) => <ProductReview key={review.id} review={review} />)}
                     </div>
                   ) : (
                     <div className="text-center py-12 bg-white rounded-xl border border-stone-100">

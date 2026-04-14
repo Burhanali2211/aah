@@ -1,6 +1,6 @@
 // Common Components Barrel Exports
-export { ProfessionalLoader } from './ProfessionalLoader';
-export { SkeletonLoader, TableSkeleton, CardSkeleton, AdminLoadingState, EmptyState } from './EnhancedLoadingStates';
+export { UniversalLoader, PageLoader } from './UniversalLoader';
+export { EmptyState } from './EnhancedLoadingStates';
 export { ErrorBoundary } from './ErrorBoundary';
 export { ErrorFallback } from './ErrorFallback';
 export { Modal } from './Modal';
@@ -14,14 +14,6 @@ export {
   AdminCard,
   AdminHeader,
   AdminMetricCard,
-  DESIGN_TOKENS,
-  useDebounce,
-  useMemoizedCallback,
-  ARIA_LABELS,
-  getAriaLabel,
-  BREAKPOINTS,
-  useResponsive,
-  ANIMATIONS,
-  getAnimationClass
+  DESIGN_TOKENS
 } from './AdminDesignSystem';
 export { ImageUpload } from './ImageUpload';

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useProducts } from '../../contexts/ProductContext';
+import { useProductsQuery } from '../../hooks/useProductQueries';
 import { Product } from '../../types';
 import { ProductCard } from './ProductCard';
 import { Sparkles, ArrowRight } from 'lucide-react';
@@ -10,10 +10,11 @@ interface PerfectPairProps {
 }
 
 export const PerfectPair: React.FC<PerfectPairProps> = ({ currentProduct }) => {
-  const { products } = useProducts();
+  const { data } = useProductsQuery(1, 10, { categoryId: currentProduct.categoryId });
+  const products = data?.products || [];
 
   // Simple logic: Find another product in the same category that isn't the current one
-  const pair = products.find(p => p.categoryId === currentProduct.categoryId && p.id !== currentProduct.id);
+  const pair = products.find(p => p.id !== currentProduct.id);
 
   if (!pair) return null;
 

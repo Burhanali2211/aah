@@ -1,46 +1,42 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useSettings } from '../../contexts/SettingsContext';
 import { normalizeImageUrl } from '../../utils/images';
 
+/**
+ * MetaManager handles dynamic SEO metadata using react-helmet-async
+ * It automatically updates the document title, meta description, and favicon
+ */
 export const MetaManager: React.FC = () => {
   const { getSiteSetting, loading } = useSettings();
 
-  useEffect(() => {
-    if (loading) return;
+  if (loading) return null;
 
-    const siteName = getSiteSetting('site_name') || 'Aligarh Attar House';
-    const siteDescription = getSiteSetting('site_description') || 'Pure Attars, Oud & Islamic Lifestyle Products from Aligarh';
-    const faviconUrl = normalizeImageUrl(getSiteSetting('favicon_url'));
+  const siteName = getSiteSetting('site_name') || 'Aligarh Attar House';
+  const siteDescription = getSiteSetting('site_description') || 'Pure Attars, Oud & Islamic Lifestyle Products from Aligarh';
+  const faviconUrl = normalizeImageUrl(getSiteSetting('favicon_url'));
 
-    // Update Page Title
-    if (document.title !== siteName) {
-      document.title = siteName;
-    }
-
-    // Update Meta Description
-    let metaDescription = document.querySelector('meta[name="description"]');
-    if (!metaDescription) {
-      metaDescription = document.createElement('meta');
-      metaDescription.setAttribute('name', 'description');
-      document.head.appendChild(metaDescription);
-    }
-    metaDescription.setAttribute('content', siteDescription);
-
-    // Update Favicon
-    if (faviconUrl) {
-      const link: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");
-      if (link) {
-        link.href = faviconUrl;
-      } else {
-        const newLink = document.createElement('link');
-        newLink.rel = 'shortcut icon';
-        newLink.href = faviconUrl;
-        document.head.appendChild(newLink);
-      }
-    }
-  }, [getSiteSetting, loading]);
-
-  return null; // This component doesn't render any UI
+  return (
+    <Helmet>
+      <title>{siteName}</title>
+      <meta name="description" content={siteDescription} />
+      
+      {faviconUrl && (
+        <link rel="shortcut icon" href={faviconUrl} />
+      )}
+      
+      {/* Dynamic Open Graph Tags */}
+      <meta property="og:title" content={siteName} />
+      <meta property="og:description" content={siteDescription} />
+      <meta property="og:type" content="website" />
+      
+      {/* Dynamic Twitter Cards */}
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={siteName} />
+      <meta name="twitter:description" content={siteDescription} />
+    </Helmet>
+  );
 };
 
 export default MetaManager;
+

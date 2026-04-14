@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, X, TrendingUp, ArrowRight, Leaf } from 'lucide-react';
-import { useProducts } from '../../contexts/ProductContext';
+import { useProductsQuery } from '../../hooks/useProductQueries';
 import { useSettings } from '../../contexts/SettingsContext';
 import { normalizeImageUrl } from '../../utils/images';
 import ProductImage from '../Common/ProductImage';
@@ -17,9 +17,9 @@ const trendingSearches = ['Sandalwood Attar', 'Kashmiri Rose', 'Oudh & Musk', 'P
 
 export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, initialQuery = '' }) => {
   const [query, setQuery] = useState('');
-  const [suggestions, setSuggestions] = useState<Product[]>([]);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const { products } = useProducts();
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  
   const { getSiteSetting } = useSettings();
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -35,7 +35,6 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, i
       setTimeout(() => inputRef.current?.focus(), 50);
     } else {
       setQuery('');
-      setSuggestions([]);
       setActiveIndex(-1);
     }
   }, [isOpen, initialQuery]);
@@ -47,28 +46,19 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, i
     return () => document.removeEventListener('keydown', onKey);
   }, [isOpen, onClose]);
 
-  // Debounced local filter — 250ms, zero DB queries
+  // Debounce query
   useEffect(() => {
-    if (query.length < 2) {
-      setSuggestions([]);
-      setActiveIndex(-1);
-      return;
-    }
     const timer = setTimeout(() => {
-      const term = query.toLowerCase();
-      const filtered = products
-        .filter(p =>
-          p.name.toLowerCase().includes(term) ||
-          (p.category && p.category.toLowerCase().includes(term)) ||
-          (p.shortDescription && p.shortDescription.toLowerCase().includes(term)) ||
-          (p.tags && p.tags.some(t => t.toLowerCase().includes(term)))
-        )
-        .slice(0, 6);
-      setSuggestions(filtered);
-      setActiveIndex(-1);
-    }, 250);
+      setDebouncedQuery(query);
+    }, 300);
     return () => clearTimeout(timer);
-  }, [query, products]);
+  }, [query]);
+
+  const { data: searchResults, isLoading: isSearching } = useProductsQuery(1, 6, {
+    search: debouncedQuery.length >= 2 ? debouncedQuery : undefined
+  });
+
+  const suggestions = searchResults?.products || [];
 
   const handleSubmit = useCallback((e?: React.FormEvent) => {
     e?.preventDefault();
@@ -155,7 +145,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, i
               {query && (
                 <button
                   type="button"
-                  onClick={() => { setQuery(''); setSuggestions([]); inputRef.current?.focus(); }}
+                onClick={() => { setQuery(''); inputRef.current?.focus(); }}
                   className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
                 >
                   <X className="h-4 w-4" />
@@ -192,7 +182,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, i
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-sm font-semibold text-gray-800">₹{product.price.toLocaleString('en-IN')}</span>
-                          {product.category && (
+                          {typeof product.category === 'string' && (
                             <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">{product.category}</span>
                           )}
                         </div>

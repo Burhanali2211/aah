@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, ShoppingCart, User, Heart, ChevronDown, LogOut, Leaf, ArrowRight, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart, useWishlist } from '../../contexts/ShoppingContext';
-import { useProducts } from '../../contexts/ProductContext';
+import { useProductsQuery, useCategories } from '../../hooks/useProductQueries';
 import { useSettings } from '../../contexts/SettingsContext';
 import { normalizeImageUrl } from '../../utils/images';
 import { Product } from '../../types';
@@ -15,38 +15,36 @@ interface HeaderProps {
 
 // Reusable inline search with live dropdown
 const SearchBar: React.FC<{ mobile?: boolean }> = ({ mobile = false }) => {
-  const { products } = useProducts();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<Product[]>([]);
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
   const wrapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Debounced local filter — 220ms, zero DB queries
+  // Debounce query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 220);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  const { data } = useProductsQuery(1, 6, {
+    search: debouncedQuery.trim().length >= 2 ? debouncedQuery : undefined
+  });
+
+  const results = data?.products || [];
+
   useEffect(() => {
     if (query.trim().length < 2) {
-      setResults([]);
       setOpen(false);
       return;
     }
-    const timer = setTimeout(() => {
-      const term = query.toLowerCase();
-      const filtered = products
-        .filter(p =>
-          p.name.toLowerCase().includes(term) ||
-          (p.category && p.category.toLowerCase().includes(term)) ||
-          (p.shortDescription && p.shortDescription.toLowerCase().includes(term)) ||
-          (p.tags && p.tags.some(t => t.toLowerCase().includes(term)))
-        )
-        .slice(0, 6);
-      setResults(filtered);
-      setOpen(filtered.length > 0 || query.trim().length >= 2);
-      setActiveIdx(-1);
-    }, 220);
-    return () => clearTimeout(timer);
-  }, [query, products]);
+    setOpen(results.length > 0 || query.trim().length >= 2);
+    setActiveIdx(-1);
+  }, [results, query]);
 
   // Close on outside click
   useEffect(() => {
@@ -92,7 +90,6 @@ const SearchBar: React.FC<{ mobile?: boolean }> = ({ mobile = false }) => {
 
   const clear = () => {
     setQuery('');
-    setResults([]);
     setOpen(false);
     inputRef.current?.focus();
   };
@@ -166,7 +163,7 @@ const SearchBar: React.FC<{ mobile?: boolean }> = ({ mobile = false }) => {
                     </p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-xs font-semibold text-gray-700">₹{product.price.toLocaleString('en-IN')}</span>
-                      {product.category && (
+                      {typeof product.category === 'string' && (
                         <span className="text-xs text-gray-400">{product.category}</span>
                       )}
                     </div>
@@ -204,7 +201,7 @@ export const Header: React.FC<HeaderProps> = ({ onAuthClick, onCartClick }) => {
   const { user, logout } = useAuth();
   const { itemCount } = useCart();
   const { items: wishlistItems } = useWishlist();
-  const { categories } = useProducts();
+  const { data: categories = [] } = useCategories();
   const { getSiteSetting } = useSettings();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isShopDropdownOpen, setIsShopDropdownOpen] = useState(false);
@@ -249,7 +246,7 @@ export const Header: React.FC<HeaderProps> = ({ onAuthClick, onCartClick }) => {
   const isActive = (path: string) => path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 bg-white transition-shadow duration-200 ${isScrolled ? 'shadow-md' : 'border-b border-gray-100'}`}>
+    <header className={`fixed top-0 left-0 right-0 z-50 bg-white transition-all duration-200 ${isScrolled ? 'shadow-md' : 'shadow-[0_1px_0_0_rgba(0,0,0,0.05)]'}`}>
 
       {/* ROW 1: Logo · Search · Icons */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 flex items-center gap-3 h-14">
@@ -404,7 +401,7 @@ export const Header: React.FC<HeaderProps> = ({ onAuthClick, onCartClick }) => {
                   </div>
                   <div className="px-3 pt-0.5">
                     <p className="px-2 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Categories</p>
-                    {categoryItems.slice(0, 8).map(cat => (
+                    {categoryItems.slice(0, 8).map((cat: any) => (
                       <Link
                         key={cat.id}
                         to={`/products?category=${cat.slug || cat.id}`}

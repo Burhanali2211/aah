@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { queryWithRetry, fetchWithRetry } from './retryFetch';
+import { Product } from '../types';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -7,12 +8,12 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 // Public-safe product fields (excludes internal/pricing fields like seller_id, min_stock_level, cost_price, etc.)
 const PRODUCT_PUBLIC_FIELDS = [
   'id', 'name', 'slug', 'description', 'short_description',
-  'price', 'original_price', 'category_id',
+  'price', 'original_price', 'category_id', 'category:categories(name)',
   'images', 'stock', 'sku', 'weight', 'dimensions',
   'tags', 'specifications', 'rating', 'review_count',
   'is_featured', 'show_on_homepage', 'is_active',
   'meta_title', 'meta_description',
-  'scent_notes', 'longevity', 'sillage', 'fragrance_family',
+  'scent_notes',
   'gender_profile', 'occasion', 'season', 'perfumer_story',
   'origin', 'grade', 'packaging_options', 'shelf_life',
   'certifications', 'usage_tips', 'culinary_uses', 'health_benefits',
@@ -70,6 +71,12 @@ export const db = {
     latest?: boolean;
     showOnHomepage?: boolean;
     sellerId?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    rating?: number;
+    sortBy?: string;
+    isSale?: boolean;
+    isActive?: boolean;
   }) {
     return fetchWithRetry(async () => {
       const page = params?.page || 1;
@@ -87,16 +94,38 @@ export const db = {
       if (params?.featured)    query = query.eq('is_featured', true);
       if (params?.showOnHomepage) query = query.eq('show_on_homepage', true);
       if (params?.sellerId)    query = query.eq('seller_id', params.sellerId);
+      
+      // Filter by price
+      if (params?.minPrice !== undefined) query = query.gte('price', params.minPrice);
+      if (params?.maxPrice !== undefined) query = query.lte('price', params.maxPrice);
+      
+      if (params?.isActive !== undefined) query = query.eq('is_active', params.isActive);
+      
+      // Filter by rating
+      if (params?.rating) query = query.gte('rating', params.rating);
+
+      // Sale products (has original_price set)
+      if (params?.isSale) {
+        // Note: PostgREST basic filters do not support column-to-column comparison like gt('original_price', 'price')
+        // We use original_price not being null as a proxy for "on sale"
+        query = query.not('original_price', 'is', 'null');
+      }
 
       if (params?.search) {
         query = query.ilike('name', `%${params.search}%`);
       }
 
-      // bestSellers: order by rating desc, then review_count desc
-      if (params?.bestSellers) {
+      // Sorting logic
+      if (params?.sortBy) {
+        switch (params.sortBy) {
+          case 'price-low-high': query = query.order('price', { ascending: true }); break;
+          case 'price-high-low': query = query.order('price', { ascending: false }); break;
+          case 'rating': query = query.order('rating', { ascending: false }); break;
+          case 'newest': query = query.order('created_at', { ascending: false }); break;
+          default: query = query.order('created_at', { ascending: false });
+        }
+      } else if (params?.bestSellers) {
         query = query.order('rating', { ascending: false });
-      } else if (params?.latest) {
-        query = query.order('created_at', { ascending: false });
       } else {
         query = query.order('created_at', { ascending: false });
       }
@@ -118,16 +147,54 @@ export const db = {
     }, { maxAttempts: 3 });
   },
 
-  async getProduct(id: string) {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(id)) return null;
+  async createProduct(product: any) {
+    const { data, error } = await supabase
+      .from('products')
+      .insert([product])
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
 
-    // Full select for detail page — needs description, specifications etc.
-    return queryWithRetry(async () => await supabase
-        .from('products')
-        .select('*')
-        .eq('id', id)
-        .single(), { maxAttempts: 3 });
+  async updateProduct(product: any) {
+    const { data, error } = await supabase
+      .from('products')
+      .update(product)
+      .eq('id', product.id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async deleteProduct(id: string) {
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+  },
+
+  async getProduct(idOrSlug: string) {
+    if (!idOrSlug) return null;
+
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const isUuid = uuidRegex.test(idOrSlug);
+
+    return fetchWithRetry(async () => {
+      let query = supabase.from('products').select(PRODUCT_PUBLIC_FIELDS);
+      
+      if (isUuid) {
+        query = query.eq('id', idOrSlug);
+      } else {
+        query = query.eq('slug', idOrSlug);
+      }
+
+      const { data, error } = await query.maybeSingle();
+      if (error) throw error;
+      return data;
+    }, { maxAttempts: 3 });
   },
 
   async getFeaturedProducts(limit = 8) {
@@ -163,6 +230,27 @@ export const db = {
 
     if (error) throw error;
     return data;
+  },
+
+  // Reviews
+  async getReviews(productId: string) {
+    return queryWithRetry(async () => await supabase
+        .from('reviews')
+        .select('*, profiles(full_name, avatar_url)')
+        .eq('product_id', productId)
+        .eq('is_approved', true)
+        .order('created_at', { ascending: false }), { maxAttempts: 3 });
+  },
+
+  async submitReview(review: { productId: string; userId: string; rating: number; title?: string; comment: string }) {
+    const { error } = await supabase.from('reviews').insert([{ 
+      product_id: review.productId, 
+      user_id: review.userId, 
+      rating: review.rating, 
+      comment: review.comment, 
+      title: review.title 
+    }]);
+    if (error) throw error;
   },
 
   // Categories

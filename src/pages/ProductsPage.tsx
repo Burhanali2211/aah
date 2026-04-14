@@ -7,65 +7,56 @@ import {
     Eye, Check, Flame, Clock, Filter, RotateCcw,
     ChevronLeft, ChevronRight, Zap, Droplet, Wind, Sun, Info, ArrowRight
 } from 'lucide-react';
-import { useProducts } from '../contexts/ProductContext';
+import { useCategories, useProductsQuery } from '../hooks/useProductQueries';
 import { useWishlist } from '../contexts/ShoppingContext';
 import { useCart } from '../contexts/ShoppingContext';
-import { Product } from '../types';
+import { Product, Category } from '../types';
 import { ProductCard } from '../components/Product/ProductCard';
 import { ProductListSkeleton } from '../components/Common/SkeletonScreens';
 import { motion, AnimatePresence } from 'framer-motion';
+import { UnifiedFilters, UnifiedFilterState } from '@/components/Product';
 
-interface FilterState {
-    category: string;
-    search: string;
-    priceRange: [number, number];
-    rating: number;
-    brand: string;
-    discount: number;
-    availability: string;
-    sortBy: string;
-}
+// Filter interface moved to UnifiedFilters component type
 
 const ProductsPage: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const { slug } = useParams<{ slug?: string }>();
-    const { products, categories, loading, fetchProducts, pagination } = useProducts();
     const navigate = useNavigate();
 
-    // UI State
+    // UI state
+    const [page, setPage] = useState(1);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [comparingIds, setComparingIds] = useState<string[]>([]);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
-    const [expandedFilters, setExpandedFilters] = useState({
-        category: true,
-        price: true,
-        rating: true,
-        discount: false,
-        availability: false
-    });
-
-    // Separate price slider state so dragging doesn't trigger full re-filter on every pixel
-    const [priceSliderValue, setPriceSliderValue] = useState(100000);
-    const priceDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    useEffect(() => {
-        return () => {
-            if (priceDebounceRef.current) clearTimeout(priceDebounceRef.current);
-        };
-    }, []);
-
-    // Filter State
-    const [filters, setFilters] = useState<FilterState>({
+    
+    // Filter state
+    const [filters, setFilters] = useState<UnifiedFilterState>({
         category: '',
         search: searchParams.get('q') || '',
         priceRange: [0, 100000],
         rating: 0,
-        brand: '',
-        discount: 0,
-        availability: 'all',
-        sortBy: 'newest'
+        brands: [],
+        concentration: [],
+        origins: [],
+        sortBy: 'newest',
+        inStock: false
     });
 
+    // Queries
+    const { data: categories = [] } = useCategories();
+    const { data: productsData, isLoading: loading } = useProductsQuery(page, 20, {
+        categoryId: filters.category || undefined,
+        search: filters.search || undefined,
+        minPrice: filters.priceRange[0],
+        maxPrice: filters.priceRange[1],
+        rating: filters.rating || undefined,
+        sortBy: filters.sortBy as any
+    });
+
+    const products = productsData?.products || [];
+    const pagination = productsData?.pagination || { page: 1, limit: 20, total: 0, pages: 0 };
+
+    // Update filters from URL
     useEffect(() => {
         const categoryParam = searchParams.get('category') || slug || '';
         if (categories.length > 0 && categoryParam) {
@@ -73,63 +64,19 @@ const ProductsPage: React.FC = () => {
             if (isUUID) {
                 setFilters(prev => ({ ...prev, category: categoryParam }));
             } else {
-                const category = categories.find(c => c.slug === categoryParam);
+                const category = categories.find((c: Category) => c.slug === categoryParam);
                 if (category) setFilters(prev => ({ ...prev, category: category.id }));
             }
         }
     }, [categories, searchParams, slug]);
 
-    // Debounced fetch — instant for category changes, 400ms delay for search typing
-    useEffect(() => {
-        const delay = filters.search ? 400 : 0;
-        const timer = setTimeout(() => {
-            fetchProducts(1, 20, {
-                categoryId: filters.category || undefined,
-                search: filters.search || undefined
-            });
-        }, delay);
-        return () => clearTimeout(timer);
-    }, [filters.category, filters.search, fetchProducts]);
+    // Slider state
+    const [priceSliderValue, setPriceSliderValue] = useState(100000);
+    const priceDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const filteredProducts = useMemo(() => {
-        let filtered = [...products];
-        
-        if (filters.search) {
-            const term = filters.search.toLowerCase();
-            filtered = filtered.filter(p => p.name.toLowerCase().includes(term) || p.description.toLowerCase().includes(term));
-        }
-        
-        if (filters.category) filtered = filtered.filter(p => p.categoryId === filters.category);
-        
-        if (filters.rating > 0) filtered = filtered.filter(p => (p.rating || 4.5) >= filters.rating);
-        
-        if (filters.discount > 0) {
-            filtered = filtered.filter(p => {
-                if (!p.originalPrice) return false;
-                const d = Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100);
-                return d >= filters.discount;
-            });
-        }
-        
-        if (filters.availability === 'in-stock') filtered = filtered.filter(p => p.stock > 0);
-
-        filtered = filtered.filter(p => p.price >= filters.priceRange[0] && p.price <= filters.priceRange[1]);
-        
-        return filtered;
-    }, [products, filters]);
-
-    const sortedProducts = useMemo(() => {
-        const sorted = [...filteredProducts];
-        switch (filters.sortBy) {
-            case 'price-low-high': return sorted.sort((a, b) => a.price - b.price);
-            case 'price-high-low': return sorted.sort((a, b) => b.price - a.price);
-            case 'rating': return sorted.sort((a, b) => (b.rating || 4.5) - (a.rating || 4.5));
-            default: return sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        }
-    }, [filteredProducts, filters.sortBy]);
-
-    const handleFilterChange = (key: keyof FilterState, value: any) => {
-        setFilters(prev => ({ ...prev, [key]: value }));
+    const handleFilterChange = (newFilters: UnifiedFilterState) => {
+        setFilters(newFilters);
+        setPage(1); // Reset page on filter change
     };
 
     const toggleCompare = (id: string) => {
@@ -138,193 +85,24 @@ const ProductsPage: React.FC = () => {
         );
     };
 
+    // The products are already filtered and sorted by the server
+    const sortedProducts = products;
+
     return (
         <div className="min-h-screen bg-[#f7f8f8]">
             <div className="max-w-[1600px] mx-auto px-4 pt-3 pb-0 flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8">
 
                 {/* Sidebar Filters */}
-                <aside className={`w-full lg:w-60 flex-shrink-0 ${isFilterOpen ? 'block' : 'hidden lg:block'}`}>
-                    <div className="lg:sticky lg:top-28 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mt-4 lg:mt-0">
-
-                        {/* Header */}
-                        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                            <div className="flex items-center gap-2">
-                                <SlidersHorizontal className="h-4 w-4 text-gray-700" />
-                                <h2 className="text-sm font-bold text-gray-900">Filters</h2>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => {
-                                        setFilters({ category: '', search: '', priceRange: [0, 100000], rating: 0, brand: '', discount: 0, availability: 'all', sortBy: 'newest' });
-                                        setPriceSliderValue(100000);
-                                    }}
-                                    className="text-[11px] font-semibold text-red-500 hover:text-red-600 cursor-pointer transition-colors"
-                                >
-                                    Clear all
-                                </button>
-                                <button onClick={() => setIsFilterOpen(false)} className="lg:hidden p-1 rounded hover:bg-gray-100 cursor-pointer">
-                                    <X className="h-4 w-4 text-gray-500" />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Category */}
-                        <FilterSection
-                            title="Category"
-                            expanded={expandedFilters.category}
-                            onToggle={() => setExpandedFilters(p => ({ ...p, category: !p.category }))}
-                        >
-                            <div className="pt-1 pb-2">
-                                {[{ id: '', name: 'All Categories' }, ...categories].map(c => (
-                                    <button
-                                        key={c.id}
-                                        onClick={() => handleFilterChange('category', c.id)}
-                                        className={`flex items-center justify-between w-full px-4 py-2 text-sm cursor-pointer transition-colors rounded-none hover:bg-gray-50 ${
-                                            filters.category === c.id
-                                                ? 'text-gray-900 font-semibold bg-gray-50'
-                                                : 'text-gray-500'
-                                        }`}
-                                    >
-                                        <div className="flex items-center gap-2.5">
-                                            <span className={`w-3 h-3 rounded-full border-2 flex-shrink-0 transition-colors ${
-                                                filters.category === c.id ? 'border-gray-900 bg-gray-900' : 'border-gray-300'
-                                            }`} />
-                                            <span className="truncate">{c.name}</span>
-                                        </div>
-                                        {'productCount' in c && c.productCount != null && (
-                                            <span className="text-[11px] text-gray-400 ml-2 flex-shrink-0">{(c as any).productCount}</span>
-                                        )}
-                                    </button>
-                                ))}
-                            </div>
-                        </FilterSection>
-
-                        {/* Price */}
-                        <FilterSection
-                            title="Price Range"
-                            expanded={expandedFilters.price}
-                            onToggle={() => setExpandedFilters(p => ({ ...p, price: !p.price }))}
-                        >
-                            <div className="px-4 pb-4 pt-2 space-y-3">
-                                <div className="flex justify-between text-xs font-semibold text-gray-700">
-                                    <span>₹0</span>
-                                    <span className="text-gray-900">₹{priceSliderValue.toLocaleString()}</span>
-                                </div>
-                                <input
-                                    type="range"
-                                    min="0"
-                                    max="100000"
-                                    step="500"
-                                    value={priceSliderValue}
-                                    onChange={(e) => {
-                                        const val = parseInt(e.target.value);
-                                        setPriceSliderValue(val);
-                                        if (priceDebounceRef.current) clearTimeout(priceDebounceRef.current);
-                                        priceDebounceRef.current = setTimeout(() => {
-                                            handleFilterChange('priceRange', [0, val]);
-                                        }, 300);
-                                    }}
-                                    className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-gray-900"
-                                />
-                                {/* Quick price chips */}
-                                <div className="flex flex-wrap gap-1.5 pt-1">
-                                    {[299, 499, 999, 2000].map(p => (
-                                        <button
-                                            key={p}
-                                            onClick={() => {
-                                                setPriceSliderValue(p);
-                                                handleFilterChange('priceRange', [0, p]);
-                                            }}
-                                            className={`text-[11px] px-2.5 py-1 rounded-full border cursor-pointer transition-colors ${
-                                                priceSliderValue === p
-                                                    ? 'bg-gray-900 text-white border-gray-900'
-                                                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-                                            }`}
-                                        >
-                                            Under ₹{p.toLocaleString()}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </FilterSection>
-
-                        {/* Rating */}
-                        <FilterSection
-                            title="Customer Rating"
-                            expanded={expandedFilters.rating}
-                            onToggle={() => setExpandedFilters(p => ({ ...p, rating: !p.rating }))}
-                        >
-                            <div className="pt-1 pb-2">
-                                {[4, 3, 2, 1].map(stars => (
-                                    <button
-                                        key={stars}
-                                        onClick={() => handleFilterChange('rating', filters.rating === stars ? 0 : stars)}
-                                        className={`flex items-center gap-2.5 w-full px-4 py-2 cursor-pointer transition-colors hover:bg-gray-50 ${
-                                            filters.rating === stars ? 'bg-gray-50' : ''
-                                        }`}
-                                    >
-                                        <span className={`w-3 h-3 rounded-full border-2 flex-shrink-0 transition-colors ${
-                                            filters.rating === stars ? 'border-gray-900 bg-gray-900' : 'border-gray-300'
-                                        }`} />
-                                        <div className="flex items-center gap-0.5">
-                                            {Array.from({ length: 5 }).map((_, i) => (
-                                                <Star key={i} className={`h-3.5 w-3.5 ${i < stars ? 'fill-amber-400 text-amber-400' : 'fill-gray-200 text-gray-200'}`} />
-                                            ))}
-                                        </div>
-                                        <span className="text-xs text-gray-500">& Up</span>
-                                    </button>
-                                ))}
-                            </div>
-                        </FilterSection>
-
-                        {/* Discount */}
-                        <FilterSection
-                            title="Discount"
-                            expanded={expandedFilters.discount}
-                            onToggle={() => setExpandedFilters(p => ({ ...p, discount: !p.discount }))}
-                        >
-                            <div className="pt-1 pb-2">
-                                {[10, 25, 35, 50].map(d => (
-                                    <button
-                                        key={d}
-                                        onClick={() => handleFilterChange('discount', filters.discount === d ? 0 : d)}
-                                        className={`flex items-center gap-2.5 w-full px-4 py-2 text-sm cursor-pointer transition-colors hover:bg-gray-50 ${
-                                            filters.discount === d ? 'bg-gray-50' : ''
-                                        }`}
-                                    >
-                                        <span className={`w-3 h-3 rounded-full border-2 flex-shrink-0 transition-colors ${
-                                            filters.discount === d ? 'border-gray-900 bg-gray-900' : 'border-gray-300'
-                                        }`} />
-                                        <span className={`text-sm ${filters.discount === d ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>
-                                            {d}% or more
-                                        </span>
-                                    </button>
-                                ))}
-                            </div>
-                        </FilterSection>
-
-                        {/* Availability */}
-                        <FilterSection
-                            title="Availability"
-                            expanded={expandedFilters.availability}
-                            onToggle={() => setExpandedFilters(p => ({ ...p, availability: !p.availability }))}
-                        >
-                            <div className="px-4 pb-4 pt-2">
-                                <label className="flex items-center gap-3 cursor-pointer group">
-                                    <div
-                                        onClick={() => handleFilterChange('availability', filters.availability === 'in-stock' ? 'all' : 'in-stock')}
-                                        className={`w-9 h-5 rounded-full transition-colors cursor-pointer flex-shrink-0 relative ${
-                                            filters.availability === 'in-stock' ? 'bg-gray-900' : 'bg-gray-200'
-                                        }`}
-                                    >
-                                        <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${
-                                            filters.availability === 'in-stock' ? 'left-4' : 'left-0.5'
-                                        }`} />
-                                    </div>
-                                    <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">In stock only</span>
-                                </label>
-                            </div>
-                        </FilterSection>
+                <aside className={`w-full lg:w-72 flex-shrink-0 ${isFilterOpen ? 'block' : 'hidden lg:block'}`}>
+                    <div className="lg:sticky lg:top-28 w-full mt-4 lg:mt-0">
+                        <UnifiedFilters
+                            filters={filters}
+                            onFiltersChange={handleFilterChange}
+                            categories={categories}
+                            isOpen={isFilterOpen}
+                            onToggle={() => setIsFilterOpen(!isFilterOpen)}
+                            productCount={pagination.total}
+                        />
                     </div>
                 </aside>
 
@@ -383,7 +161,7 @@ const ProductsPage: React.FC = () => {
                             <h3 className="text-xl font-black text-[#131921] mb-2">No results for this selection</h3>
                             <p className="text-sm text-gray-500">Try adjusting your filters or search term.</p>
                             <button 
-                               onClick={() => setFilters({ category: '', search: '', priceRange: [0, 100000], rating: 0, brand: '', discount: 0, availability: 'all', sortBy: 'newest' })}
+                               onClick={() => setFilters({ category: '', search: '', priceRange: [0, 100000], rating: 0, brands: [], concentration: [], origins: [], sortBy: 'newest', inStock: false })}
                                className="mt-6 px-6 py-2 bg-[#131921] text-white rounded-lg text-sm font-bold hover:bg-black transition-colors"
                             >
                                Clear All Filters
@@ -407,7 +185,7 @@ const ProductsPage: React.FC = () => {
                     {pagination.pages > 1 && (
                         <div className="mt-12 flex justify-center items-center gap-2">
                             <button 
-                                onClick={() => { fetchProducts(pagination.page - 1, 20, { categoryId: filters.category || undefined, search: filters.search || undefined }); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                onClick={() => { setPage(prev => Math.max(1, prev - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                                 disabled={pagination.page === 1}
                                 className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-30 transition-colors"
                             >
@@ -417,7 +195,7 @@ const ProductsPage: React.FC = () => {
                                 {Array.from({ length: pagination.pages }).map((_, i) => (
                                     <button 
                                         key={i}
-                                        onClick={() => { fetchProducts(i + 1, 20, { categoryId: filters.category || undefined, search: filters.search || undefined }); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                        onClick={() => { setPage(i + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                                         className={`w-10 h-10 rounded-lg text-sm font-black transition-all ${pagination.page === i + 1 ? 'bg-[#131921] text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
                                     >
                                         {i + 1}
@@ -425,7 +203,7 @@ const ProductsPage: React.FC = () => {
                                 ))}
                             </div>
                             <button 
-                                onClick={() => { fetchProducts(pagination.page + 1, 20, { categoryId: filters.category || undefined, search: filters.search || undefined }); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                onClick={() => { setPage(prev => Math.min(pagination.pages, prev + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                                 disabled={pagination.page === pagination.pages}
                                 className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-30 transition-colors"
                             >
@@ -497,30 +275,6 @@ const ProductsPage: React.FC = () => {
     );
 };
 
-const FilterSection: React.FC<{ title: string; expanded: boolean; onToggle: () => void; children: React.ReactNode }> = memo(({ title, expanded, onToggle, children }) => (
-    <div className="border-t border-gray-100">
-        <button
-            onClick={onToggle}
-            className="flex items-center justify-between w-full px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors"
-        >
-            <span className="text-sm font-semibold text-gray-800">{title}</span>
-            <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
-        </button>
-        <AnimatePresence initial={false}>
-            {expanded && (
-                <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2, ease: 'easeOut' }}
-                    className="overflow-hidden"
-                >
-                    {children}
-                </motion.div>
-            )}
-        </AnimatePresence>
-    </div>
-));
-FilterSection.displayName = 'FilterSection';
+// Removed Redundant FilterSection component
 
 export default ProductsPage;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useMobileAuth } from '../../hooks/useMobileAuth';
+import { useMobileAuth } from '../../hooks/useMobile';
 import { LogIn, LogOut, Smartphone } from 'lucide-react';
 
 interface ResponsiveAuthButtonProps {

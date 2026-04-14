@@ -2,7 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAuthGuard } from '../../hooks/useAuthGuard';
-import { ProfessionalLoader } from './ProfessionalLoader';
+import { PageLoader } from './UniversalLoader';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -51,10 +51,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // This prevents any content from being rendered before auth check
   if (loading) {
     return (
-      <ProfessionalLoader
-        fullPage={true}
-        text="Verifying access..."
-        showBrand={true}
+      <PageLoader
+        text="Authenticating..."
       />
     );
   }

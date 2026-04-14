@@ -1,13 +1,13 @@
-import React, { useEffect, memo } from 'react';
+import React, { memo } from 'react';
 import { Star, TrendingUp, ArrowRight, Flame, Tag, ShoppingBag } from 'lucide-react';
-import { useProducts } from '../../contexts/ProductContext';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../contexts/ShoppingContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { BuyNowButton } from '../Product/BuyNowButton';
+import { useBestSellers } from '@/hooks/useProductQueries';
 
 export const BestSellers: React.FC = memo(() => {
-  const { bestSellers, bestSellersLoading } = useProducts();
+  const { data: bestSellers = [], isLoading: bestSellersLoading } = useBestSellers(8);
   const { addItem } = useCart();
   const { user, showAuthModal } = useAuth();
 

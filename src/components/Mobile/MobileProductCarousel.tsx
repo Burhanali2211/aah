@@ -2,9 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 // Removed framer-motion imports
 import { Product } from '../../types';
-import { MobileProductCard } from './MobileProductCard';
+import { ProductCard } from '../Product/ProductCard';
 import { MobileIconButton } from './MobileTouchButton';
-import { useSwipeGesture } from '../../hooks/useMobileGestures';
+import { useSwipeGesture } from '../../hooks/useMobile';
 
 interface MobileProductCarouselProps {
   products: Product[];
@@ -115,7 +115,7 @@ export const MobileProductCarousel: React.FC<MobileProductCarouselProps> = ({
               className="flex-shrink-0 px-1.5"
               style={{ width: `${itemWidth}%` }}
             >
-              <MobileProductCard product={product} variant={variant} />
+              <ProductCard product={product} variant={variant} />
             </div>
           ))}
         </div>
@@ -227,7 +227,7 @@ export const MobileProductGrid: React.FC<MobileProductGridProps> = ({
           key={product.id}
           className="touch-manipulation"
         >
-          <MobileProductCard
+          <ProductCard
             product={product}
             variant={variant}
           />

@@ -1,12 +1,12 @@
 import React, { useEffect, memo, useRef, useState, useCallback } from 'react';
 import { ArrowRight, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
-import { useProducts } from '../../contexts/ProductContext';
+import { useLatestProducts } from '@/hooks/useProductQueries';
 import { ProductGridSkeleton } from '../Common/ProductCardSkeleton';
-import { LatestArrivalProductCard } from '../Product/LatestArrivalProductCard';
+import { ProductCard } from '../Product/ProductCard';
 import { Link } from 'react-router-dom';
 
 export const LatestArrivals: React.FC = memo(() => {
-  const { latestProducts, latestLoading } = useProducts();
+  const { data: latestProducts = [], isLoading: latestLoading } = useLatestProducts(8);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -83,7 +83,7 @@ export const LatestArrivals: React.FC = memo(() => {
           >
             {latestProducts.map((product, idx) => (
               <div key={product.id} className="flex-shrink-0 w-[140px] sm:w-[160px] md:w-[180px]">
-                <LatestArrivalProductCard product={product} index={idx} />
+                <ProductCard product={product} variant="compact" priority={idx < 4 ? 'high' : 'auto'} />
               </div>
             ))}
           </div>

@@ -5,7 +5,7 @@ import {
   Smartphone, Banknote, Building, Wallet 
 } from 'lucide-react';
 import { MobileTouchButton } from './MobileTouchButton';
-import { useMobileDetection } from '../../hooks/useMobileGestures';
+import { useMobileDetection } from '../../hooks/useMobile';
 
 interface MobileCheckoutProps {
   currentStep: number;

@@ -280,3 +280,81 @@ export function handleDatabaseError(error: Error): string {
   
   return 'A database error occurred. Please try again or contact support if the issue persists.';
 }
+
+/**
+ * Initializes global error handlers to suppress non-critical errors
+ * (e.g., from browser extensions or stale chunk loads)
+ */
+export function initializeGlobalErrorHandlers(): void {
+  if (typeof window === 'undefined') return;
+
+  const handleChunkLoadError = (errorMessage: string): boolean => {
+    const isChunkLoadError =
+      errorMessage.includes('error loading dynamically imported module') ||
+      errorMessage.includes('Failed to fetch dynamically imported module') ||
+      errorMessage.includes('Importing a module script failed');
+
+    if (isChunkLoadError) {
+      const RELOAD_KEY = 'chunkLoadReload';
+      const last = sessionStorage.getItem(RELOAD_KEY);
+      if (!last || Date.now() - parseInt(last, 10) > 30000) {
+        sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
+        window.location.reload();
+      }
+      return true;
+    }
+    return false;
+  };
+
+  const isExtensionError = (message: string, stack: string = ''): boolean => {
+    const indicators = [
+      'moz-extension://',
+      'chrome-extension://',
+      'safari-extension://',
+      'appConfig.js',
+      'XrayWrapper',
+      'NS_ERROR_CORRUPTED_CONTENT',
+      'NS_BINDING_ABORTED',
+      'ServiceWorker',
+      'sw.js',
+      'newValue'
+    ];
+    
+    return indicators.some(ind => message.includes(ind) || stack.includes(ind));
+  };
+
+  window.addEventListener('unhandledrejection', (event) => {
+    const error = event.reason;
+    const errorMessage = error?.message || String(error) || '';
+    
+    if (handleChunkLoadError(errorMessage)) {
+      event.preventDefault();
+      return;
+    }
+
+    if (isExtensionError(errorMessage, error?.stack)) {
+      event.preventDefault();
+      if (import.meta.env.DEV) {
+        console.debug('Suppressed non-critical error:', errorMessage);
+      }
+    }
+  });
+
+  const originalErrorHandler = window.onerror;
+  window.onerror = (message, source, lineno, colno, error) => {
+    const errorMessage = String(message);
+    const errorSource = String(source || '');
+
+    if (handleChunkLoadError(errorMessage)) return true;
+
+    if (isExtensionError(errorMessage, errorSource)) {
+      if (import.meta.env.DEV) {
+        console.debug('Suppressed non-critical error:', errorMessage);
+      }
+      return true;
+    }
+
+    return originalErrorHandler ? originalErrorHandler(message, source, lineno, colno, error) : false;
+  };
+}
+

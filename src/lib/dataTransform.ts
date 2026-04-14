@@ -163,6 +163,18 @@ export function transformProduct(product: any): any {
     transformed.updatedAt = new Date(transformed.updatedAt);
   }
 
+  // Extract category name from join if present
+  // This prevents the "found: object with keys {name}" error in React
+  if (transformed.category && typeof transformed.category === 'object') {
+    const categoryName = transformed.category.name || transformed.categoryName;
+    if (categoryName) {
+      transformed.categoryName = categoryName;
+      // For backward compatibility and to avoid React child errors, 
+      // set category to the string name instead of the object
+      transformed.category = categoryName;
+    }
+  }
+
   return transformed;
 }
 

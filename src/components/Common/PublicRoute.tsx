@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { ProfessionalLoader } from './ProfessionalLoader';
+import { PageLoader } from './UniversalLoader';
 
 interface PublicRouteProps {
   children: React.ReactNode;
@@ -26,10 +26,8 @@ export const PublicRoute: React.FC<PublicRouteProps> = ({
 
   if (isInitializing) {
     return (
-      <ProfessionalLoader
-        fullPage={true}
-        text="Loading..."
-        showBrand={true}
+      <PageLoader
+        text="Checking access..."
       />
     );
   }

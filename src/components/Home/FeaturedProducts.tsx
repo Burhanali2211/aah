@@ -1,8 +1,8 @@
 import React, { useEffect, memo } from 'react';
 import { Star, ArrowRight } from 'lucide-react';
-import { useProducts } from '../../contexts/ProductContext';
+import { useFeaturedProducts } from '@/hooks/useProductQueries';
 import { ProductGridSkeleton } from '../Common/ProductCardSkeleton';
-import { HomepageProductCard } from '../Product/HomepageProductCard';
+import { ProductCard } from '../Product/ProductCard';
 import { Link } from 'react-router-dom';
 
 /**
@@ -11,7 +11,7 @@ import { Link } from 'react-router-dom';
  * 2 cards per row on mobile, 4 on desktop
  */
 export const FeaturedProducts: React.FC = memo(() => {
-    const { featuredProducts, featuredLoading } = useProducts();
+    const { data: featuredProducts = [], isLoading: featuredLoading } = useFeaturedProducts(8);
 
     return (
         <section className="py-6 sm:py-8 bg-white w-full">
@@ -33,7 +33,7 @@ export const FeaturedProducts: React.FC = memo(() => {
                     <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 md:gap-6">
                         {featuredProducts.map((product, index) => (
                             <div key={product.id} className="w-full">
-                                <HomepageProductCard product={product} index={index} />
+                                <ProductCard product={product} variant="featured" priority={index < 4 ? 'high' : 'auto'} />
                             </div>
                         ))}
                     </div>

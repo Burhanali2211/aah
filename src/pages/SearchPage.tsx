@@ -4,32 +4,21 @@ import { Search, Filter, X } from 'lucide-react';
 import { ProductCard } from '../components/Product/ProductCard';
 import { ProductDetails } from '../components/Product/ProductDetails';
 import { SearchResultsSkeleton } from '../components/Common/SkeletonScreens';
-import { useProducts } from '../contexts/ProductContext';
+import { useProductsQuery } from '../hooks/useProductQueries';
 import { Product } from '../types';
 
 export const SearchPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
-  const { products, loading } = useProducts();
-
-  useEffect(() => {
-    const query = searchParams.get('q') || '';
-    setSearchQuery(query);
-
-    if (query.trim()) {
-      const filtered = products.filter(product =>
-        product.name.toLowerCase().includes(query.toLowerCase()) ||
-        product.description.toLowerCase().includes(query.toLowerCase()) ||
-        (product.category?.toLowerCase().includes(query.toLowerCase()) || false) ||
-        (product.tags && product.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase())))
-      );
-      setFilteredProducts(filtered);
-    } else {
-      setFilteredProducts(products);
-    }
-  }, [searchParams, products]);
+  
+  const q = searchParams.get('q') || '';
+  const { data, isLoading } = useProductsQuery(1, 40, { 
+    search: q.trim() ? q : undefined 
+  });
+  
+  const filteredProducts = data?.products || [];
+  const loading = isLoading;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

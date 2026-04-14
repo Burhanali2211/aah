@@ -2,10 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, Star, Heart, Minus, Plus, Shield, Truck, RotateCcw, Award } from 'lucide-react';
 import { Product } from '../../types';
-import { useAddToCartWithAuth } from '../../hooks/useAddToCartWithAuth';
-import { useAddToWishlistWithAuth } from '../../hooks/useAddToWishlistWithAuth';
-import { useCartButtonStyles } from '../../hooks/useCartButtonStyles';
-import { useCartButtonState } from '../../hooks/useCartButtonState';
+import { useAddToCartWithAuth, useAddToWishlistWithAuth, useCartButtonStyles, useCartButtonState } from '../../hooks';
 import { AddToCartButton } from './AddToCartButton';
 
 interface ProductDetailsProps {

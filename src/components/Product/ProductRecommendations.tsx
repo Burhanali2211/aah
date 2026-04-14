@@ -13,14 +13,14 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Product } from '../../types';
-import { useProducts } from '../../contexts/ProductContext';
+import { useProductsQuery } from '../../hooks/useProductQueries';
 import { useCart } from '../../contexts/ShoppingContext';
 import { useWishlist } from '../../contexts/ShoppingContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { MobileCompactCarousel } from '../Mobile/MobileProductCarousel';
-import { useMobileDetection } from '../../hooks/useMobileGestures';
-import { useCartButtonState } from '../../hooks/useCartButtonState';
+import { useMobileDetection } from '../../hooks/useMobile';
+import { useCartButtonState } from '../../hooks';
 
 interface ProductRecommendationsProps {
   currentProduct?: Product;
@@ -38,47 +38,6 @@ interface RecommendationAlgorithm {
   getRecommendations: (currentProduct: Product, allProducts: Product[], maxItems: number) => Product[];
 }
 
-// Helper component for cart button with state
-const CartButton: React.FC<{
-  product: Product;
-  onAddToCart: (product: Product, e: React.MouseEvent) => void;
-  showAddToCart: boolean;
-}> = ({ product, onAddToCart, showAddToCart }) => {
-  const { buttonState, markAsJustAdded, isInCart } = useCartButtonState(product);
-
-  if (!showAddToCart || product.stock === 0) return null;
-
-  return (
-    <button
-      onClick={(e) => {
-        onAddToCart(product, e);
-        // Only mark as just added if it's not already in cart
-        if (!isInCart) {
-          markAsJustAdded();
-        }
-      }}
-      className={`absolute bottom-2 left-2 right-2 py-1.5 px-3 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center space-x-1 touch-manipulation text-xs font-medium ${
-        buttonState === 'added' || buttonState === 'in-cart'
-          ? 'bg-green-500 hover:bg-green-600 text-white'
-          : 'bg-neutral-900 text-white hover:bg-neutral-800 active:bg-neutral-700'
-      }`}
-    >
-      {buttonState === 'added' || buttonState === 'in-cart' ? (
-        <Check className="h-3.5 w-3.5 animate-in fade-in zoom-in duration-200" />
-      ) : (
-        <ShoppingCart className="h-3.5 w-3.5" />
-      )}
-      <span>
-        {buttonState === 'added'
-          ? 'Added!'
-          : buttonState === 'in-cart'
-          ? 'In Cart'
-          : 'Add to Cart'}
-      </span>
-    </button>
-  );
-};
-
 export const ProductRecommendations: React.FC<ProductRecommendationsProps> = ({
   currentProduct,
   type,
@@ -89,7 +48,11 @@ export const ProductRecommendations: React.FC<ProductRecommendationsProps> = ({
   showAddToCart = true,
   layout = 'horizontal'
 }) => {
-  const { products } = useProducts();
+  const { data, isLoading: queryLoading } = useProductsQuery(1, 100, {
+    categoryId: (type === 'related' || type === 'frequently-bought') ? currentProduct?.categoryId : undefined
+  });
+  const products = data?.products || [];
+  
   const { addItem: addToCart, items } = useCart();
   const { addItem: addToWishlist, isInWishlist } = useWishlist();
   const { showNotification } = useNotification();
@@ -233,6 +196,8 @@ export const ProductRecommendations: React.FC<ProductRecommendationsProps> = ({
 
   // Generate recommendations
   useEffect(() => {
+    if (queryLoading) return;
+
     if (type === 'recently-viewed') {
       // For recently viewed, we don't need a current product
       const recentlyViewed = JSON.parse(localStorage.getItem('recentlyViewed') || '[]') as string[];
@@ -242,13 +207,16 @@ export const ProductRecommendations: React.FC<ProductRecommendationsProps> = ({
     } else if (currentProduct && products.length > 0) {
       setIsLoading(true);
       // Simulate API delay for realistic UX
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         const recommendations = algorithms[type].getRecommendations(currentProduct, products, maxItems);
         setRecommendedProducts(recommendations);
         setIsLoading(false);
-      }, 300);
+      }, 100);
+      return () => clearTimeout(timer);
+    } else {
+      setIsLoading(false);
     }
-  }, [currentProduct, products, type, maxItems]);
+  }, [currentProduct, products, type, maxItems, queryLoading]);
 
   const handleAddToCart = (product: Product, e: React.MouseEvent, markAsJustAdded?: () => void) => {
     e.preventDefault();
@@ -313,7 +281,7 @@ export const ProductRecommendations: React.FC<ProductRecommendationsProps> = ({
     }
   };
 
-  if (isLoading) {
+  if (queryLoading || isLoading) {
     return (
       <div className={`${className}`}>
         <div className="flex items-center space-x-2 mb-3">
@@ -406,13 +374,6 @@ export const ProductRecommendations: React.FC<ProductRecommendationsProps> = ({
                     >
                       <Heart className={`h-3.5 w-3.5 ${isInWishlist(product.id) ? 'fill-current' : ''}`} />
                     </button>
-
-                    {/* Quick Add to Cart */}
-                    <CartButton
-                      product={product}
-                      onAddToCart={handleAddToCart}
-                      showAddToCart={showAddToCart}
-                    />
                   </div>
 
                   {/* Product Info */}

@@ -144,7 +144,7 @@ export const AboutPage: React.FC = () => {
               The Aligarh Attars Standard
             </h2>
             <p className="text-lg text-stone-500 max-w-3xl mx-auto">
-              We define quality through natural essences, traditional distillation, and long-lasting sillage
+              We define quality through natural essences, traditional distillation, and exquisite profiles
             </p>
           </motion.div>
 
@@ -158,7 +158,7 @@ export const AboutPage: React.FC = () => {
             {[
               { icon: Leaf, title: 'Natural & Pure', text: 'We use the finest botanicals, spices, and resins. No synthetic fixatives or harsh chemicals — just pure, concentrated oil.' },
               { icon: Scissors, title: 'Deg-Bhapka Distilled', text: 'Our attars are distilled using the centuries-old copper vessel method. This preserves the delicate aromatic molecules for a superior fragrance profile.' },
-              { icon: Award, title: 'Supreme Longevity', text: 'Our concentrated oils are built to linger. We focus on heavy base notes and pure extracts that ensure your fragrance stays with you all day.' },
+              { icon: Award, title: 'Pure Artistry', text: 'Our blends are crafted with a focus on depth and complexity. We ensure each creation tells a unique story that resonates with your personal style.' },
             ].map(({ icon: Icon, title, text }) => (
               <motion.div
                 key={title}

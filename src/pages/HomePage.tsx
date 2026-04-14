@@ -3,7 +3,7 @@ import { Hero } from '@/components/Home/Hero';
 import { CategoryChips } from '@/components/Home/CategoryChips';
 import { FlashSale } from '@/components/Home/FlashSale';
 import { BestSellers } from '@/components/Home/BestSellers';
-import { useProducts } from '@/contexts/ProductContext';
+import { useCategories } from '@/hooks/useProductQueries';
 import { FeaturedProductsSectionSkeleton, BestSellersSectionSkeleton, LatestArrivalsSectionSkeleton } from '@/components/Common/SkeletonScreens';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ShieldCheck, Truck, RotateCcw, Headphones } from 'lucide-react';
@@ -189,7 +189,7 @@ TrustBar.displayName = 'TrustBar';
 
 /* ─── Main Page ─── */
 export default function HomePage() {
-  const { categories, loading: categoriesLoading } = useProducts();
+  const { data: categories = [], isLoading: categoriesLoading } = useCategories();
 
   return (
     <div className="min-h-screen bg-stone-50/50">

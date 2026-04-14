@@ -1,7 +1,8 @@
 import React, { useMemo, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { LayoutGrid, ArrowRight, ChevronRight } from 'lucide-react';
-import { useProducts } from '../contexts/ProductContext';
+import { useCategories } from '../hooks/useProductQueries';
+import { Category } from '../types';
 import { getSafeImageUrl } from '../utils/images';
 
 // ── Attar / perfume emoji map ────────────────────────────────────────────────
@@ -118,7 +119,7 @@ CategoryCard.displayName = 'CategoryCard';
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 const CategoriesPage: React.FC = () => {
-  const { categories, loading } = useProducts();
+  const { data: categories = [], isLoading: loading } = useCategories();
 
   const activeCategories = useMemo(
     () => categories.filter(c => c.isActive !== false),
@@ -196,7 +197,7 @@ const CategoriesPage: React.FC = () => {
 
             {/* 2-col mobile, 3-col tablet, 4-col desktop */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
-              {activeCategories.map((cat, i) => (
+              {activeCategories.map((cat: Category, i: number) => (
                 <CategoryCard
                   key={cat.id}
                   id={cat.id}

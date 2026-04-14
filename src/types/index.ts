@@ -32,7 +32,8 @@ export interface User {
     price: number;
     originalPrice?: number; // Maps to original_price in DB
     categoryId: string; // Maps to category_id in DB
-    category?: string; // Category name for display
+    categoryName?: string; // Maps to name from categories join
+    category?: string; // Category name for display (legacy)
     images: string[];
     stock: number;
     minStockLevel?: number; // Maps to min_stock_level in DB

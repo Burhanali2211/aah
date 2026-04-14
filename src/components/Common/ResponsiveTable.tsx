@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 interface TableColumn<T = Record<string, unknown>> {
   key: string;
@@ -31,16 +31,6 @@ export const ResponsiveTable = <T extends Record<string, unknown> = Record<strin
     emptyMessage = 'No data available',
     className = ''
   } = props;
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   if (loading) {
     return (
@@ -50,39 +40,41 @@ export const ResponsiveTable = <T extends Record<string, unknown> = Record<strin
     );
   }
 
-  // Filter columns based on responsive breakpoints
-  const visibleColumns = columns.filter(col => {
-    if (col.responsive === 'all' || !col.responsive) return true;
-    
-    const breakpoints: Record<string, number> = {
-      xs: 0,
-      sm: 640,
-      md: 768,
-      lg: 1024,
-      xl: 1280
+  const getResponsiveClass = (responsive?: TableColumn['responsive']) => {
+    if (!responsive || responsive === 'all') return '';
+    const map: Record<string, string> = {
+      sm: 'hidden sm:table-cell',
+      md: 'hidden md:table-cell',
+      lg: 'hidden lg:table-cell',
+      xl: 'hidden xl:table-cell'
     };
-    
-    return windowWidth >= (breakpoints[col.responsive] || 0);
-  });
+    return map[responsive as string] || '';
+  };
 
-  // Calculate if we should use fixed table layout
-  const hasColumnWidths = visibleColumns.some(col => col.width || col.minWidth || col.maxWidth);
-  const useFixedLayout = hasColumnWidths && windowWidth >= 768;
+  const getResponsiveMobileClass = (responsive?: TableColumn['responsive']) => {
+    if (!responsive || responsive === 'all') return '';
+    const map: Record<string, string> = {
+      sm: 'hidden sm:flex',
+      md: 'hidden md:flex',
+      lg: 'hidden lg:flex',
+      xl: 'hidden xl:flex'
+    };
+    return map[responsive as string] || '';
+  };
 
   return (
     <div className={`overflow-hidden rounded-lg border border-gray-200 shadow-sm ${className}`}>
-      {/* Desktop Table */}
       <div className="hidden md:block overflow-x-auto">
         <table 
-          className={`min-w-full divide-y divide-gray-200 ${useFixedLayout ? '' : ''}`}
-          style={{ tableLayout: useFixedLayout ? 'fixed' : 'auto' }}
+          className="min-w-full divide-y divide-gray-200"
+          style={{ tableLayout: columns.some(c => c.width || c.maxWidth) ? 'fixed' : 'auto' }}
         >
           <thead className="bg-gray-50">
             <tr>
-              {visibleColumns.map((column) => (
+              {columns.map((column) => (
                 <th
                   key={column.key}
-                  className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${column.className || ''}`}
+                  className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${getResponsiveClass(column.responsive)} ${column.className || ''}`}
                   style={{ 
                     width: column.width ? (typeof column.width === 'string' ? column.width : `${column.width}px`) : 'auto',
                     minWidth: column.minWidth ? (typeof column.minWidth === 'string' ? column.minWidth : `${column.minWidth}px`) : 'auto',
@@ -97,7 +89,7 @@ export const ResponsiveTable = <T extends Record<string, unknown> = Record<strin
           <tbody className="bg-white divide-y divide-gray-200">
             {data.length === 0 ? (
               <tr>
-                <td colSpan={visibleColumns.length} className="px-6 py-12 text-center">
+                <td colSpan={columns.length} className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center justify-center">
                     <div className="text-gray-400 mb-2">
                       <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -115,10 +107,10 @@ export const ResponsiveTable = <T extends Record<string, unknown> = Record<strin
                   onClick={() => onRowClick?.(record)}
                   className={`hover:bg-gray-50 ${onRowClick ? 'cursor-pointer' : ''}`}
                 >
-                  {visibleColumns.map((column) => (
+                  {columns.map((column) => (
                     <td
                       key={`${record.id || index}-${column.key}`}
-                      className={`px-6 py-4 text-sm ${column.className || ''}`}
+                      className={`px-6 py-4 text-sm ${getResponsiveClass(column.responsive)} ${column.className || ''}`}
                       style={{ 
                         width: column.width ? (typeof column.width === 'string' ? column.width : `${column.width}px`) : 'auto',
                         minWidth: column.minWidth ? (typeof column.minWidth === 'string' ? column.minWidth : `${column.minWidth}px`) : 'auto',
@@ -140,7 +132,6 @@ export const ResponsiveTable = <T extends Record<string, unknown> = Record<strin
         </table>
       </div>
 
-      {/* Mobile Cards */}
       <div className="md:hidden">
         {data.length === 0 ? (
           <div className="p-6 text-center">
@@ -162,8 +153,11 @@ export const ResponsiveTable = <T extends Record<string, unknown> = Record<strin
                 className={`p-4 ${onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''}`}
               >
                 <div className="space-y-3">
-                  {visibleColumns.map((column) => (
-                    <div key={`${record.id || index}-${column.key}`} className="flex justify-between">
+                  {columns.map((column) => (
+                    <div 
+                      key={`${record.id || index}-${column.key}`} 
+                      className={`justify-between flex ${getResponsiveMobileClass(column.responsive)}`}
+                    >
                       <dt className="text-sm font-medium text-gray-500">{column.title}</dt>
                       <dd className="text-sm text-gray-900 break-words max-w-[60%]">
                         {column.render

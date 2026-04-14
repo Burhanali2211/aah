@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { ShoppingCart, Check, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Product } from '../../types';
-import { useCartButtonStyles } from '../../hooks/useCartButtonStyles';
-import { useCartButtonState } from '../../hooks/useCartButtonState';
+import { useCartButtonStyles, useCartButtonState } from '../../hooks';
 import { useCart } from '../../contexts/ShoppingContext';
 import { useAuth } from '../../contexts/AuthContext';
 

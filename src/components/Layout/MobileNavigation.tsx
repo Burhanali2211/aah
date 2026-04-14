@@ -7,8 +7,9 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/ShoppingContext';
 import { useWishlist } from '../../contexts/ShoppingContext';
-import { useSwipeGesture } from '../../hooks/useMobileGestures';
-import { useProducts } from '../../contexts/ProductContext';
+import { useSwipeGesture } from '../../hooks/useMobile';
+import { useCategories } from '../../hooks/useProductQueries';
+import { Category } from '../../types';
 import { useSettings } from '../../contexts/SettingsContext';
 import { SiteLogo } from '../Common/SiteLogo';
 
@@ -39,7 +40,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   const { user, logout } = useAuth();
   const { itemCount } = useCart();
   const { items: wishlistItems } = useWishlist();
-  const { categories } = useProducts();
+  const { data: categories = [] } = useCategories();
   const { getSiteSetting } = useSettings();
   const location = useLocation();
   const navigate = useNavigate();
@@ -62,8 +63,8 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
       dropdownItems: [
         { name: 'All Products', href: '/products' },
         ...categories
-          .filter(c => c.isActive !== false)
-          .map(c => ({
+          .filter((c: Category) => c.isActive !== false)
+          .map((c: Category) => ({
             name: c.name,
             href: `/products?category=${c.slug || c.id}`
           }))

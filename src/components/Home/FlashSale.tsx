@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo, memo } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { Zap, ArrowRight } from 'lucide-react';
-import { useProducts } from '../../contexts/ProductContext';
+import { useDiscountedProducts } from '../../hooks/useProductQueries';
 
 // Timer — isolated so only it re-renders every second
 const FlashSaleTimer: React.FC = memo(() => {
@@ -37,14 +37,9 @@ const FlashSaleTimer: React.FC = memo(() => {
 FlashSaleTimer.displayName = 'FlashSaleTimer';
 
 export const FlashSale: React.FC = memo(() => {
-  const { products } = useProducts();
+  const { data: flashSaleProducts = [], isLoading } = useDiscountedProducts(6);
 
-  const flashSaleProducts = useMemo(
-    () => products.filter(p => p.originalPrice && p.originalPrice > p.price).slice(0, 6),
-    [products]
-  );
-
-  if (flashSaleProducts.length === 0) return null;
+  if (isLoading || flashSaleProducts.length === 0) return null;
 
   return (
     <section className="py-6 sm:py-8 bg-white w-full">
@@ -69,7 +64,7 @@ export const FlashSale: React.FC = memo(() => {
 
         {/* Mobile: horizontal scroll carousel · sm+: grid */}
         <div className="flex overflow-x-auto gap-2.5 pb-2 snap-x snap-mandatory -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-3 lg:grid-cols-6 sm:gap-3 sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
-          {flashSaleProducts.map(product => {
+          {flashSaleProducts.map((product: any) => {
             const shortName = product.name.split(' ').slice(0, 4).join(' ');
 
             return (
