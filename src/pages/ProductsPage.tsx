@@ -168,7 +168,7 @@ const ProductsPage: React.FC = () => {
                             </button>
                         </div>
                     ) : (
-                        <div className={viewMode === 'grid' ? "grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4" : "space-y-3 sm:space-y-4"}>
+                        <div className={viewMode === 'grid' ? "grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4" : "space-y-3 sm:space-y-4"}>
                             {sortedProducts.map((product) => (
                                 <ProductCard
                                     key={product.id}

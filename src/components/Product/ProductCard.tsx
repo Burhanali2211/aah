@@ -175,7 +175,7 @@ export const ProductCard: React.FC<ProductCardProps> = memo(({
       }`}
     >
       {/* Image Container */}
-      <div className="relative aspect-square overflow-hidden bg-gray-50">
+      <div className="relative aspect-[4/3] sm:aspect-square overflow-hidden bg-gray-50">
         <Link to={`/products/${product.id}`} className="block h-full">
           <ProductImage
             product={product}
@@ -186,7 +186,7 @@ export const ProductCard: React.FC<ProductCardProps> = memo(({
         </Link>
 
         {/* Badges */}
-        <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
+        <div className="absolute top-2 left-2 flex flex-col gap-1.5 z-10">
           {variant === 'best-seller' && rank && rank <= 5 && (
             <div className={`w-10 h-10 flex items-center justify-center font-black text-lg rounded-xl shadow-lg ${
               rank === 1 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-white' : 'bg-gray-800 text-white'
@@ -208,50 +208,41 @@ export const ProductCard: React.FC<ProductCardProps> = memo(({
           )}
         </div>
 
-        {/* Wishlist Button */}
         <button
           onClick={handleWishlistToggle}
-          className={`absolute top-3 right-3 p-2.5 rounded-2xl backdrop-blur-md shadow-lg transition-all duration-300 hover:scale-110 z-10 ${
+          className={`absolute top-2 right-2 p-2 rounded-xl backdrop-blur-md shadow-lg transition-all duration-300 hover:scale-110 z-10 ${
             isInWishlist(product.id) ? 'bg-red-500 text-white' : 'bg-white/80 text-gray-600 hover:bg-white'
           }`}
         >
-          <Heart className={`h-4 w-4 ${isInWishlist(product.id) ? 'fill-current' : ''}`} />
+          <Heart className={`h-3.5 w-3.5 ${isInWishlist(product.id) ? 'fill-current' : ''}`} />
         </button>
       </div>
 
       {/* Content */}
-      <div className={`flex flex-col flex-1 p-4 sm:p-5 gap-2 ${variant === 'luxury' ? 'bg-amber-50/30' : ''}`}>
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-bold text-green-600 uppercase tracking-widest">{product.category}</span>
-          <div className="flex items-center bg-gray-50 px-2 py-1 rounded-lg">
-            <Star className="h-3 w-3 text-amber-500 fill-current" />
-            <span className="ml-1 text-[11px] font-bold text-gray-700">{product.rating.toFixed(1)}</span>
+      <div className={`flex flex-col p-2 sm:p-4 gap-1 sm:gap-1.5 ${variant === 'luxury' ? 'bg-amber-50/30' : ''}`}>
+        <div className="flex items-center justify-between mb-0.5">
+          <span className="text-[9px] font-bold text-green-600 uppercase tracking-wider line-clamp-1">{product.category}</span>
+          <div className="flex items-center bg-gray-100/50 px-1.5 py-0.5 rounded-md">
+            <Star className="h-2.5 w-2.5 text-amber-500 fill-current" />
+            <span className="ml-1 text-[10px] font-bold text-gray-700">{product.rating.toFixed(1)}</span>
           </div>
         </div>
 
-        <Link to={`/products/${product.id}`}>
-          <h3 className="font-bold text-gray-900 text-sm sm:text-base leading-tight line-clamp-2 min-h-[2.5rem] group-hover:text-green-700 transition-colors">
+        <Link to={`/products/${product.id}`} className="mb-0.5">
+          <h3 className="font-bold text-gray-900 text-[13px] sm:text-base leading-tight line-clamp-1 sm:line-clamp-2 sm:min-h-[2.5rem] group-hover:text-green-700 transition-colors">
             {product.name}
           </h3>
         </Link>
 
-        <div className="flex items-baseline gap-2 mt-auto">
-          <span className={`font-black ${variant === 'luxury' ? 'text-amber-900' : 'text-gray-900'} text-lg sm:text-xl`}>
+        <div className="flex items-baseline gap-1 mb-1">
+          <span className={`font-black ${variant === 'luxury' ? 'text-amber-900' : 'text-gray-900'} text-base sm:text-xl`}>
             ₹{product.price.toLocaleString('en-IN')}
           </span>
           {discount > 0 && (
-            <span className="text-xs text-gray-400 line-through">₹{product.originalPrice?.toLocaleString('en-IN')}</span>
+            <span className="text-[10px] text-gray-400 line-through">₹{product.originalPrice?.toLocaleString('en-IN')}</span>
           )}
         </div>
 
-        {/* Buy Now (Visible only in featured/luxury or hover) */}
-        {variant !== 'compact' && (
-          <BuyNowButton
-            onClick={handleAddToCart}
-            disabled={product.stock === 0}
-            className="mt-2"
-          />
-        )}
       </div>
     </motion.div>
   );

@@ -14,7 +14,7 @@ export const ProductCardSkeleton: React.FC<ProductCardSkeletonProps> = ({ varian
     return (
       <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 animate-pulse">
         {/* Image Skeleton */}
-        <div className="aspect-square bg-gradient-to-br from-gray-200 to-gray-300"></div>
+        <div className="aspect-[4/3] sm:aspect-square bg-gradient-to-br from-gray-200 to-gray-300"></div>
         
         {/* Content Skeleton */}
         <div className="p-5">
@@ -62,7 +62,7 @@ export const ProductCardSkeleton: React.FC<ProductCardSkeletonProps> = ({ varian
         <div className="absolute top-3 right-3 z-10 h-6 w-24 bg-gray-300 rounded-full"></div>
         
         {/* Image Skeleton */}
-        <div className="aspect-square bg-gradient-to-br from-gray-200 to-gray-300"></div>
+        <div className="aspect-[4/3] sm:aspect-square bg-gradient-to-br from-gray-200 to-gray-300"></div>
         
         {/* Content Skeleton */}
         <div className="p-4">
@@ -94,7 +94,7 @@ export const ProductCardSkeleton: React.FC<ProductCardSkeletonProps> = ({ varian
       <div className="absolute top-3 right-3 z-10 h-6 w-20 bg-gray-200 rounded-lg"></div>
       
       {/* Image Skeleton */}
-      <div className="aspect-square bg-gradient-to-br from-gray-200 to-gray-300"></div>
+      <div className="aspect-[4/3] sm:aspect-square bg-gradient-to-br from-gray-200 to-gray-300"></div>
       
       {/* Content Skeleton */}
       <div className="p-4">
