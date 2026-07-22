@@ -13,10 +13,6 @@ export const initGA = (measurementId?: string) => {
   const gaId = measurementId || import.meta.env.VITE_GA_MEASUREMENT_ID;
 
   if (!gaId) {
-    // Only warn in production - silent in development
-    if (import.meta.env.PROD) {
-      console.warn('Google Analytics Measurement ID not found. Analytics disabled.');
-    }
     return;
   }
 
