@@ -1,0 +1,37 @@
+﻿
+Path                                                                 LineNumber Line                                   
+----                                                                 ---------- ----                                   
+F:\aligarhattarhouse\src\components\Auth\AuthModal.tsx                          102 export default AuthModal;              
+F:\aligarhattarhouse\src\components\Auth\ProfessionalAuthLayout.tsx             168 export default ProfessionalAuthLayout; 
+F:\aligarhattarhouse\src\components\Common\AdminLoadingState.tsx                 30 export default AdminLoadingState;      
+F:\aligarhattarhouse\src\components\Common\EnhancedButton.tsx                    22 export default EnhancedButton;         
+F:\aligarhattarhouse\src\components\Common\ErrorFallback.tsx                    171 export default ErrorFallback;          
+F:\aligarhattarhouse\src\components\Common\MetaManager.tsx                       41 export default MetaManager;            
+F:\aligarhattarhouse\src\components\Common\PerformanceDashboard.tsx             311 export default PerformanceDashboard;   
+F:\aligarhattarhouse\src\components\Common\ProductCardSkeleton.tsx              144 export default ProductCardSkeleton;    
+F:\aligarhattarhouse\src\components\Common\ProductImage.tsx                     192 export default ProductImage;           
+F:\aligarhattarhouse\src\components\Common\ProtectedRoute.tsx                   100 export default ProtectedRoute;         
+F:\aligarhattarhouse\src\components\Common\PublicRoute.tsx                       45 export default PublicRoute;            
+F:\aligarhattarhouse\src\components\Common\SiteLogo.tsx                         112 export default SiteLogo;               
+F:\aligarhattarhouse\src\components\Common\SkeletonScreens.tsx                  450 export default {                       
+F:\aligarhattarhouse\src\components\Customer\CustomerDashboard.tsx               44 export default CustomerDashboard;      
+F:\aligarhattarhouse\src\components\Home\BestSellers.tsx                        203 export default BestSellers;            
+F:\aligarhattarhouse\src\components\Home\CategoryChips.tsx                      206 export default CategoryChips;          
+F:\aligarhattarhouse\src\components\Home\FeaturedProducts.tsx                    78 export default FeaturedProducts;       
+F:\aligarhattarhouse\src\components\Home\Hero.tsx                               268 export default Hero;                   
+F:\aligarhattarhouse\src\components\Home\LatestArrivals.tsx                     128 export default LatestArrivals;         
+F:\aligarhattarhouse\src\components\Home\LovedByThousands.tsx                   146 export default LovedByThousands;       
+F:\aligarhattarhouse\src\components\Home\RecentlyViewed.tsx                      28 export default RecentlyViewed;         
+F:\aligarhattarhouse\src\components\Home\Testimonials.tsx                       417 export default Testimonials;           
+F:\aligarhattarhouse\src\components\Home\TrendingSection.tsx                     72 export default TrendingSection;        
+F:\aligarhattarhouse\src\components\Layout\BottomNav.tsx                        140 export default BottomNav;              
+F:\aligarhattarhouse\src\components\Layout\Header.tsx                           331 export default Header;                 
+F:\aligarhattarhouse\src\components\Layout\MobileNavigation.tsx                 370 export default MobileNavigation;       
+F:\aligarhattarhouse\src\components\Product\AddToCartButton.tsx                 152 export default AddToCartButton;        
+F:\aligarhattarhouse\src\components\Product\AdvancedFilters.tsx                 583 export default AdvancedFilters;        
+F:\aligarhattarhouse\src\components\Product\BestSellerProductCard.tsx           176 export default BestSellerProductCard;  
+F:\aligarhattarhouse\src\components\Product\FeaturedProductCard.tsx             150 export default FeaturedProductCard;    
+F:\aligarhattarhouse\src\components\Product\HomepageProductCard.tsx             147 export default HomepageProductCard;    
+F:\aligarhattarhouse\src\components\Product\LatestArrivalProductCard.tsx         91 export default LatestArrivalProductC...
+
+

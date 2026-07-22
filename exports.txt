@@ -1,0 +1,29 @@
+﻿
+Path                                                 LineNumber Line                                 
+----                                                 ---------- ----                                 
+F:\aligarhattarhouse\src\pages\AboutPage.tsx                    353 export default AboutPage;            
+F:\aligarhattarhouse\src\pages\AuthCallbackPage.tsx             172 export default AuthCallbackPage;     
+F:\aligarhattarhouse\src\pages\AuthPage.tsx                     538 export default AuthPage;             
+F:\aligarhattarhouse\src\pages\CategoriesPage.tsx               217 export default CategoriesPage;       
+F:\aligarhattarhouse\src\pages\CheckoutPage.tsx                 257 export default CheckoutPage;         
+F:\aligarhattarhouse\src\pages\ComparePage.tsx                   33 export default ComparePage;          
+F:\aligarhattarhouse\src\pages\ContactPage.tsx                  350 export default ContactPage;          
+F:\aligarhattarhouse\src\pages\DashboardPage.tsx                 73 export default DashboardPage;        
+F:\aligarhattarhouse\src\pages\DealsPage.tsx                     68 export default DealsPage;            
+F:\aligarhattarhouse\src\pages\HomePage.tsx                     249 export default function HomePage() { 
+F:\aligarhattarhouse\src\pages\ImprovedCheckoutPage.tsx         617 export default ImprovedCheckoutPage; 
+F:\aligarhattarhouse\src\pages\NewArrivalsPage.tsx               47 export default NewArrivalsPage;      
+F:\aligarhattarhouse\src\pages\NotFoundPage.tsx                 112 export default NotFoundPage;         
+F:\aligarhattarhouse\src\pages\OrderConfirmationPage.tsx        342 export default OrderConfirmationPage;
+F:\aligarhattarhouse\src\pages\OrderTrackingPage.tsx            456 export default OrderTrackingPage;    
+F:\aligarhattarhouse\src\pages\PrivacyPolicyPage.tsx            263 export default PrivacyPolicyPage;    
+F:\aligarhattarhouse\src\pages\ProductDetailPage.tsx            399 export default ProductDetailPage;    
+F:\aligarhattarhouse\src\pages\ProductsPage.tsx                 527 export default ProductsPage;         
+F:\aligarhattarhouse\src\pages\RefundPolicyPage.tsx             331 export default RefundPolicyPage;     
+F:\aligarhattarhouse\src\pages\ResetPasswordPage.tsx            229 export default ResetPasswordPage;    
+F:\aligarhattarhouse\src\pages\SearchPage.tsx                   170 export default SearchPage;           
+F:\aligarhattarhouse\src\pages\ShippingPolicyPage.tsx           340 export default ShippingPolicyPage;   
+F:\aligarhattarhouse\src\pages\TermsOfServicePage.tsx           262 export default TermsOfServicePage;   
+F:\aligarhattarhouse\src\pages\WishlistPage.tsx                 132 export default WishlistPage;         
+
+
