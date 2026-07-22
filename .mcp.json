@@ -3,8 +3,8 @@
     "supabase": {
       "url": "https://mcp.supabase.com/mcp",
       "env": {
-        "SUPABASE_URL": "https://owxchbftqhydphjplprp.supabase.co",
-        "SUPABASE_SERVICE_ROLE_KEY": "${SUPABASE_SERVICE_ROLE_KEY}"
+        "SUPABASE_URL": "https://ytlpcvmmhqzircthlyjb.supabase.co",
+        "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0bHBjdm1taHF6aXJjdGhseWpiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDYyNzc5OSwiZXhwIjoyMTAwMjAzNzk5fQ.64ReOlAD8zJvzUm7xsF_swXowlZKfqa90DtoPnSDKVI"
       }
     }
   }
